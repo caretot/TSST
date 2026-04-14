@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Guide | Well Planning Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0c0f; --surface:#111318; --surface2:#181c23; --surface3:#1e232d;
+  --border:#252b37; --border2:#2e3747;
+  --accent:#00d4ff; --accent2:#ff6b35;
+  --text:#e8edf5; --text2:#8a95a8; --text3:#5a6475;
+  --pink:#ff3d8a; --yellow:#ffd600; --green:#00e676; --red:#ff4444;
+  --nb-w:224px; --nb-col:46px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,212,255,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03)1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* NAVBAR */
+.nb{position:fixed;left:0;top:0;bottom:0;width:var(--nb-col);background:#0d1017;
+  border-right:1px solid #1e2530;display:flex;flex-direction:column;z-index:200;
+  overflow:hidden;transition:width 0.22s cubic-bezier(0.4,0,0.2,1);}
+.nb.open{width:var(--nb-w);}
+.nb-toggle{display:flex;align-items:center;justify-content:center;width:var(--nb-col);
+  height:var(--nb-col);flex-shrink:0;cursor:pointer;border-bottom:1px solid #1e2530;
+  background:transparent;border-left:none;border-top:none;border-right:none;padding:0;}
+.nb-toggle-icon{width:18px;height:14px;position:relative;}
+.nb-toggle-icon span{display:block;position:absolute;left:0;right:0;height:1.5px;
+  background:#8a95a8;border-radius:1px;
+  transition:transform 0.22s ease,opacity 0.18s ease,top 0.22s ease;}
+.nb-toggle-icon span:nth-child(1){top:0;}
+.nb-toggle-icon span:nth-child(2){top:6px;}
+.nb-toggle-icon span:nth-child(3){top:12px;}
+.nb.open .nb-toggle-icon span:nth-child(1){top:6px;transform:rotate(45deg);background:#00d4ff;}
+.nb.open .nb-toggle-icon span:nth-child(2){opacity:0;transform:translateX(-6px);}
+.nb.open .nb-toggle-icon span:nth-child(3){top:6px;transform:rotate(-45deg);background:#00d4ff;}
+.nb-section{font-size:0.5rem;letter-spacing:0.18em;text-transform:uppercase;color:#3a4558;
+  padding:14px 14px 5px;white-space:nowrap;overflow:hidden;opacity:0;pointer-events:none;transition:opacity 0.16s;}
+.nb.open .nb-section{opacity:1;}
+.nb-items{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 0;}
+.nb-items::-webkit-scrollbar{width:3px;}
+.nb-items::-webkit-scrollbar-thumb{background:#1e2530;border-radius:2px;}
+.nb-item{display:flex;align-items:center;gap:0;padding:0;height:40px;color:#5a6880;
+  font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:0.03em;
+  text-decoration:none;white-space:nowrap;border-left:2px solid transparent;
+  cursor:pointer;background:transparent;width:100%;
+  transition:color 0.14s,background 0.14s,border-color 0.14s;position:relative;}
+.nb-item:hover{color:#8a95a8;background:rgba(255,255,255,0.03);}
+.nb-item.active{color:#00d4ff;border-left-color:#00d4ff;background:rgba(0,212,255,0.07);}
+.nb-icon{width:var(--nb-col);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.nb-icon svg{width:15px;height:15px;}
+.nb-label{flex:1;overflow:hidden;text-overflow:ellipsis;padding-right:12px;
+  opacity:0;pointer-events:none;transition:opacity 0.16s;}
+.nb.open .nb-label{opacity:1;pointer-events:auto;}
+.nb-item::after{content:attr(data-tip);position:absolute;left:calc(var(--nb-col) + 8px);top:50%;
+  transform:translateY(-50%);background:#181c23;border:1px solid #252b37;color:#e8edf5;
+  font-size:0.64rem;font-family:'JetBrains Mono',monospace;padding:5px 10px;border-radius:5px;
+  white-space:nowrap;pointer-events:none;z-index:300;display:none;box-shadow:0 4px 16px rgba(0,0,0,0.5);}
+.nb:not(.open) .nb-item:hover::after{display:block;}
+.nb-divider{height:1px;background:#1a2030;margin:5px 14px;}
+.nb-footer{padding:10px 14px;border-top:1px solid #1e2530;font-size:0.52rem;color:#3a4558;
+  font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;
+  opacity:0;transition:opacity 0.16s;flex-shrink:0;}
+.nb.open .nb-footer{opacity:1;}
+body::after{content:"";position:fixed;inset:0;background:rgba(0,0,0,0);z-index:150;
+  pointer-events:none;transition:background 0.25s ease;}
+body.nb-open::after{background:rgba(0,0,0,0.5);}
+
+/* LAYOUT */
+.app-wrapper{position:relative;z-index:1;max-width:1100px;margin:0 auto;
+  padding:0 32px 60px calc(32px + var(--nb-col));}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:20px 0 22px;
+  border-bottom:1px solid var(--border);margin-bottom:36px;flex-wrap:wrap;gap:12px;}
+.logo-group{display:flex;align-items:center;gap:14px;}
+.logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),#0055cc);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.logo-icon svg{width:18px;height:18px;}
+.app-title{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;letter-spacing:-0.02em;}
+.app-title span{color:var(--accent);}
+.header-meta{font-size:0.63rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;}
+.badge{background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--accent);
+  padding:4px 12px;border-radius:20px;font-size:0.63rem;letter-spacing:0.08em;text-transform:uppercase;}
+
+/* CONTENT */
+.guide-grid{display:grid;grid-template-columns:200px 1fr;gap:32px;align-items:start;}
+@media(max-width:800px){.guide-grid{grid-template-columns:1fr;}}
+
+/* TOC sidebar */
+.toc{position:sticky;top:24px;}
+.toc-title{font-size:0.55rem;color:var(--text3);letter-spacing:0.15em;text-transform:uppercase;
+  margin-bottom:10px;}
+.toc-item{display:block;font-size:0.65rem;color:var(--text3);text-decoration:none;
+  padding:5px 0 5px 10px;border-left:2px solid var(--border);
+  transition:color 0.14s,border-color 0.14s;line-height:1.4;}
+.toc-item:hover{color:var(--accent);border-left-color:var(--accent);}
+.toc-item.sub{padding-left:20px;font-size:0.61rem;}
+
+/* Sections */
+.guide-section{margin-bottom:48px;}
+.guide-section:last-child{margin-bottom:0;}
+.section-anchor{display:block;position:relative;top:-80px;visibility:hidden;}
+
+h2{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:var(--text);
+  letter-spacing:0.04em;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+h2 .h2-icon{width:28px;height:28px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+h2 .h2-icon svg{width:14px;height:14px;color:var(--accent);}
+
+h3{font-size:0.78rem;font-weight:700;color:var(--text2);letter-spacing:0.08em;
+  text-transform:uppercase;margin:20px 0 8px;}
+
+p{font-size:0.72rem;color:var(--text2);line-height:1.85;margin-bottom:10px;}
+p:last-child{margin-bottom:0;}
+
+/* Panel-style content box */
+.guide-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  overflow:hidden;margin-bottom:14px;}
+.guide-box:last-child{margin-bottom:0;}
+.guide-box-header{padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);
+  font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--text2);display:flex;align-items:center;gap:8px;}
+.guide-box-body{padding:14px 16px;}
+
+/* Formula display */
+.formula{background:var(--surface3);border:1px solid var(--border2);border-radius:7px;
+  padding:12px 16px;font-size:0.72rem;line-height:2;color:var(--text2);margin:10px 0;}
+.formula code{font-family:'JetBrains Mono',monospace;font-size:0.74rem;}
+.f-var{color:var(--accent);font-weight:700;}
+.f-var2{color:var(--yellow);font-weight:700;}
+.f-var3{color:var(--accent2);font-weight:700;}
+.f-var4{color:var(--green);font-weight:700;}
+.f-var5{color:var(--pink);font-weight:700;}
+
+/* Definition list */
+.def-list{display:flex;flex-direction:column;gap:7px;}
+.def-row{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:baseline;}
+.def-term{font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:700;color:var(--accent);}
+.def-desc{font-size:0.7rem;color:var(--text2);line-height:1.6;}
+
+/* Step list */
+.step-list{display:flex;flex-direction:column;gap:10px;margin-top:6px;}
+.step{display:flex;gap:12px;align-items:flex-start;}
+.step-num{width:22px;height:22px;border-radius:50%;background:rgba(0,212,255,0.12);
+  border:1px solid rgba(0,212,255,0.3);color:var(--accent);font-size:0.62rem;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.step-text{font-size:0.71rem;color:var(--text2);line-height:1.7;}
+.step-text b{color:var(--text);}
+
+/* Callout */
+.callout{display:flex;gap:10px;padding:11px 14px;border-radius:8px;margin:12px 0;font-size:0.7rem;line-height:1.7;}
+.callout.info{background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.2);color:var(--text2);}
+.callout.warn{background:rgba(255,214,0,0.07);border:1px solid rgba(255,214,0,0.2);color:var(--text2);}
+.callout.tip {background:rgba(0,230,118,0.06);border:1px solid rgba(0,230,118,0.2);color:var(--text2);}
+.callout-icon{font-size:0.85rem;flex-shrink:0;margin-top:1px;}
+
+/* Tool card */
+.tool-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:10px;}
+@media(max-width:700px){.tool-cards{grid-template-columns:1fr;}}
+.tool-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:12px 14px;}
+.tool-card-name{font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:700;
+  color:var(--text);margin-bottom:4px;}
+.tool-card-desc{font-size:0.63rem;color:var(--text3);line-height:1.6;}
+.tool-card-link{display:inline-block;margin-top:8px;font-size:0.6rem;color:var(--accent);
+  text-decoration:none;letter-spacing:0.06em;}
+.tool-card-link:hover{text-decoration:underline;}
+
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;}
+
+.watermark{text-align:center;margin-top:40px;font-size:0.55rem;color:var(--text3);letter-spacing:0.08em;}
+</style>
+</head>
+<body id="page-guide">
+
+<nav class="nb" id="nb">
+  <button class="nb-toggle" id="nb-toggle" aria-label="Toggle navigation">
+    <div class="nb-toggle-icon"><span></span><span></span><span></span></div>
+  </button>
+  <div class="nb-section">Navigation</div>
+  <div class="nb-items">
+    <a class="nb-item" id="nav-intersection" href="wellintersection.html" data-tip="Well Intersection Calculator">
+      <span class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M8 6h8M9 10h6M10 14h4M11 18h2"/></svg></span>
+      <span class="nb-label">Well Intersection</span>
+    </a>
+    <a class="nb-item" id="nav-sweep" href="effectseries.html" data-tip="Dip & Azimuth Sweep">
+      <span class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+      <span class="nb-label">Dip &amp; Az Sweep</span>
+    </a>
+    <a class="nb-item" id="nav-montecarlo" href="tstmd.html" data-tip="TST ↔ MD Monte Carlo">
+      <span class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+      <span class="nb-label">TST ↔ MD Monte Carlo</span>
+    </a>
+    <div class="nb-divider"></div>
+    <a class="nb-item active" id="nav-guide" href="guide.html" data-tip="User Guide">
+      <span class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+      <span class="nb-label">Guide</span>
+    </a>
+    <a class="nb-item" id="nav-about" href="about.html" data-tip="About">
+      <span class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
+      <span class="nb-label">About</span>
+    </a>
+  </div>
+  <div class="nb-footer">Well Planning Suite · v1.0</div>
+</nav>
+
+<div class="app-wrapper">
+<header>
+  <div class="logo-group">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+      </svg>
+    </div>
+    <div>
+      <div class="app-title">User <span>Guide</span></div>
+      <div class="header-meta">Well Planning Suite · Documentation</div>
+    </div>
+  </div>
+  <div class="badge">Reference</div>
+</header>
+
+<div class="guide-grid">
+
+  <!-- TOC -->
+  <aside class="toc">
+    <div class="toc-title">Contents</div>
+    <a class="toc-item" href="#overview">Overview</a>
+    <a class="toc-item" href="#concepts">Key Concepts</a>
+    <a class="toc-item sub" href="#concepts">Angles &amp; Directions</a>
+    <a class="toc-item sub" href="#concepts">Thickness Types</a>
+    <a class="toc-item" href="#formulas">Core Formulas</a>
+    <a class="toc-item sub" href="#formulas">Intersection Angle</a>
+    <a class="toc-item sub" href="#formulas">MD / TST / VT / TVT</a>
+    <a class="toc-item" href="#tools">Tools</a>
+    <a class="toc-item sub" href="#tool-intersection">Well Intersection</a>
+    <a class="toc-item sub" href="#tool-sweep">Dip &amp; Az Sweep</a>
+    <a class="toc-item sub" href="#tool-mc">Monte Carlo</a>
+    <a class="toc-item" href="#tips">Tips &amp; Notes</a>
+  </aside>
+
+  <!-- Main content -->
+  <main>
+
+    <!-- OVERVIEW -->
+    <div class="guide-section">
+      <span class="section-anchor" id="overview"></span>
+      <h2>
+        <span class="h2-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
+        Overview
+      </h2>
+      <p>The Well Planning Suite is a browser-based toolkit for computing geometric relationships between a drilled well and a subsurface formation. It is designed for exploration and development geologists and drilling engineers who need quick, transparent calculations without a spreadsheet.</p>
+      <p>All calculations assume a straight-line (no-curvature) well trajectory and a planar formation. No curvature correction is applied.</p>
+
+      <div class="tool-cards">
+        <div class="tool-card">
+          <div class="tool-card-name">Well Intersection</div>
+          <div class="tool-card-desc">Deterministic single-value converter. Input FD, FA, WI, WA, TST or MD and get all derived thicknesses plus a trajectory plot and rose diagram.</div>
+          <a class="tool-card-link" href="wellintersection.html">Open →</a>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-name">Dip &amp; Az Sweep</div>
+          <div class="tool-card-desc">Shows how MD (or TST) varies across a range of formation dip and azimuth values, plotted as a family of curves.</div>
+          <a class="tool-card-link" href="effectseries.html">Open →</a>
+        </div>
+        <div class="tool-card">
+          <div class="tool-card-name">TST ↔ MD Monte Carlo</div>
+          <div class="tool-card-desc">Propagates triangular-distribution uncertainty through all five input parameters and outputs a full CDF of MD or TST.</div>
+          <a class="tool-card-link" href="tstmd.html">Open →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- KEY CONCEPTS -->
+    <div class="guide-section">
+      <span class="section-anchor" id="concepts"></span>
+      <h2>
+        <span class="h2-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+        Key Concepts
+      </h2>
+
+      <h3>Input Angles &amp; Directions</h3>
+      <div class="def-list">
+        <div class="def-row"><span class="def-term">FD — Formation Dip</span><span class="def-desc">Angle of the formation measured <b>down from horizontal</b>. Range 0–90°. A horizontal bed has FD = 0°; a vertical formation has FD = 90°.</span></div>
+        <div class="def-row"><span class="def-term">FA — Formation Azimuth</span><span class="def-desc">Direction of dip, measured clockwise from North. Range 0–360°. This is the <b>dip direction</b>, not the strike. Strike = FA − 90°.</span></div>
+        <div class="def-row"><span class="def-term">WI — Well Inclination</span><span class="def-desc">Angle of the well measured <b>up from vertical</b>. Range 0–90°. A vertical well has WI = 0°; a horizontal well has WI = 90°.</span></div>
+        <div class="def-row"><span class="def-term">WA — Well Azimuth</span><span class="def-desc">Direction the well is heading, measured clockwise from North. Range 0–360°.</span></div>
+      </div>
+
+      <div class="callout info" style="margin-top:14px;">
+        <span class="callout-icon">ℹ</span>
+        <span>Formation dip is measured <b>down from horizontal</b> and well inclination is measured <b>up from vertical</b>. This is the standard convention used in the suite and matches the original Excel tool by Giuseppe D'Antonio.</span>
+      </div>
+
+      <h3>Thickness Types</h3>
+      <div class="def-list">
+        <div class="def-row"><span class="def-term">TST</span><span class="def-desc"><b>True Stratigraphic Thickness</b> — perpendicular distance between formation top and base, measured normal to the bedding plane.</span></div>
+        <div class="def-row"><span class="def-term">MD</span><span class="def-desc"><b>Measured Depth</b> — length of wellbore drilled through the formation.</span></div>
+        <div class="def-row"><span class="def-term">VT</span><span class="def-desc"><b>Vertical Thickness in Well</b> — vertical component of MD. VT = MD × cos(WI).</span></div>
+        <div class="def-row"><span class="def-term">TVT</span><span class="def-desc"><b>True Vertical Thickness</b> — vertical distance between formation top and base measured straight down. TVT = TST / cos(FD).</span></div>
+        <div class="def-row"><span class="def-term">TVD</span><span class="def-desc"><b>True Vertical Depth</b> — absolute vertical depth from surface. Used for reservoir top, GOC, and OWC inputs.</span></div>
+      </div>
+    </div>
+
+    <!-- FORMULAS -->
+    <div class="guide-section">
+      <span class="section-anchor" id="formulas"></span>
+      <h2>
+        <span class="h2-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg></span>
+        Core Formulas
+      </h2>
+
+      <h3>Intersection Angle α</h3>
+      <p>The apparent dip — the angle between the well axis and the bedding plane. This is the fundamental geometric quantity that all other calculations derive from.</p>
+
+      <div class="formula">
+        <span class="f-var">α</span> = arcsin( |<span class="f-var">w</span> · <span class="f-var">n</span>| )<br><br>
+        where <span class="f-var">w</span> = well unit vector &nbsp;=&nbsp;
+          [ sin(<span class="f-var3">WI</span>)·cos(<span class="f-var2">WA</span>),&nbsp;
+            sin(<span class="f-var3">WI</span>)·sin(<span class="f-var2">WA</span>),&nbsp;
+            −cos(<span class="f-var3">WI</span>) ]<br><br>
+        and &nbsp;<span class="f-var">n</span> = formation normal =&nbsp;
+          [ sin(<span class="f-var4">FD</span>)·cos(<span class="f-var5">FA</span>),&nbsp;
+            sin(<span class="f-var4">FD</span>)·sin(<span class="f-var5">FA</span>),&nbsp;
+            cos(<span class="f-var4">FD</span>) ]
+      </div>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚠</span>
+        <span>When α ≈ 0° the well runs <b>parallel to bedding</b> — no valid MD/TST conversion exists. The suite flags this as a parallel geometry.</span>
+      </div>
+
+      <h3>MD / TST Conversion</h3>
+      <div class="formula">
+        <span class="f-var">MD</span> = <span class="f-var2">TST</span> / sin(<span class="f-var">α</span>)<br>
+        <span class="f-var2">TST</span> = <span class="f-var">MD</span> × sin(<span class="f-var">α</span>)
+      </div>
+
+      <h3>Derived Thicknesses</h3>
+      <div class="formula">
+        VT &nbsp;= <span class="f-var">MD</span> × cos(<span class="f-var3">WI</span>)<br>
+        TVT = <span class="f-var2">TST</span> / cos(<span class="f-var4">FD</span>)<br>
+        TST / MD &nbsp;= sin(<span class="f-var">α</span>)<br>
+        TST / TVT = cos(<span class="f-var4">FD</span>)
+      </div>
+
+      <h3>Reservoir Geometry</h3>
+      <div class="formula">
+        Base Reservoir TVD = Top Reservoir TVD + VT<br>
+        Formation Strike = (FA − 90 + 360) mod 360
+      </div>
+    </div>
+
+    <!-- TOOLS -->
+    <div class="guide-section">
+      <span class="section-anchor" id="tools"></span>
+      <h2>
+        <span class="h2-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+        Tools
+      </h2>
+
+      <span class="section-anchor" id="tool-intersection"></span>
+      <div class="guide-box">
+        <div class="guide-box-header">
+          <span class="dot" style="background:#00d4ff"></span>
+          Well Intersection Calculator
+        </div>
+        <div class="guide-box-body">
+          <div class="step-list">
+            <div class="step"><div class="step-num">1</div><div class="step-text">Enter <b>FD, FA, WI, WA</b> in the Well &amp; Formation Parameters panel. Values are clamped to their valid ranges automatically.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text">Enter <b>Top Reservoir TVD, GOC, and OWC</b> depths as positive numbers. The tool converts them to negative internally for plotting.</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text">In the <b>MD Calculator</b> panel enter a TST value. All derived quantities update instantly: MD, VT, TVT, ratios, base reservoir depth, and strike.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text">In the <b>TST Calculator</b> panel enter an MD to convert in the other direction.</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text">The <b>Trajectory Plot</b> shows the wellbore (red), formation top (grey solid), base (grey dashed), GOC (pink dashed), and OWC (cyan dashed). Use the <b>Refresh</b> button if the canvas looks distorted after resizing.</div></div>
+            <div class="step"><div class="step-num">6</div><div class="step-text">The <b>Rose Diagram</b> shows compass orientation. Red = formation azimuth (length ∝ 1 − FD/90). Violet dashed = dip direction (FA + 90°, same length scaling). Grey = wellbore (length ∝ 1 − WI/90).</div></div>
+          </div>
+        </div>
+      </div>
+
+      <span class="section-anchor" id="tool-sweep"></span>
+      <div class="guide-box">
+        <div class="guide-box-header">
+          <span class="dot" style="background:#ff3d8a"></span>
+          Dip &amp; Azimuth Sweep
+        </div>
+        <div class="guide-box-body">
+          <div class="step-list">
+            <div class="step"><div class="step-num">1</div><div class="step-text">Set <b>Well Inclination</b> and <b>Well Azimuth</b>, then enter the given <b>TST</b> (in TST→MD mode) or <b>MD</b> (in MD→TST mode).</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text">Define the <b>Formation Dip sweep range</b> (Lowest / Highest in whole degrees). The X-axis covers every 1° step in this range.</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text">Define the <b>Formation Azimuth sweep range</b>. Up to <b>14 evenly-spaced azimuth values</b> are plotted as separate colour-coded series.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text">The <b>Intersection Angle</b> bar shows the angle at the midpoint of both sweep ranges.</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text">In the <b>3-Case Matrix</b> below, enter Min / Base / Max values for both FD and FA independently. The 3 × 3 = 9 result cards show intersection angle and MD/TST for every combination.</div></div>
+          </div>
+          <div class="callout tip" style="margin-top:12px;">
+            <span class="callout-icon">✓</span>
+            <span>Red cells in the matrix mean the well runs nearly parallel to bedding at that geometry. The actual near-zero angle is shown with a ⚠ warning rather than just "N/A".</span>
+          </div>
+        </div>
+      </div>
+
+      <span class="section-anchor" id="tool-mc"></span>
+      <div class="guide-box">
+        <div class="guide-box-header">
+          <span class="dot" style="background:#ffd600"></span>
+          TST ↔ MD Monte Carlo Simulator
+        </div>
+        <div class="guide-box-body">
+          <div class="step-list">
+            <div class="step"><div class="step-num">1</div><div class="step-text">For each of the five parameters (TST/MD, FD, FA, WI, WA) enter <b>Minimum, Most Likely,</b> and <b>Maximum</b> values defining a triangular distribution.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-text">Choose the number of <b>iterations</b> (1 000 – 50 000). More iterations give a smoother CDF at the cost of runtime.</div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-text">Click <b>CALCULATE</b>. The simulator draws random samples from each triangular distribution, computes MD (or TST) for every sample, and builds the CDF.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-text">The <b>Percentile Table</b> and <b>Stat Cards</b> give P10–P90, mean, and standard deviation. Hover the CDF chart to read off MD/TST, CDF%, and apparent dip α at any point.</div></div>
+            <div class="step"><div class="step-num">5</div><div class="step-text">The <b>Sensitivity Matrix</b> performs a One-At-a-Time (OAT) sweep: each parameter varies across its Min/ML/Max while all others stay at Most Likely, showing which parameter has the largest impact on the intersection angle.</div></div>
+            <div class="step"><div class="step-num">6</div><div class="step-text">Use the <b>Copy / Paste</b> buttons in the Input panel header to save and restore all 15 input values across sessions or between modes.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIPS -->
+    <div class="guide-section">
+      <span class="section-anchor" id="tips"></span>
+      <h2>
+        <span class="h2-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+        Tips &amp; Notes
+      </h2>
+      <div class="callout info">
+        <span class="callout-icon">ℹ</span>
+        <span><b>Azimuth convention:</b> All azimuths are geographic (true North), measured clockwise 0–360°. Formation azimuth is the dip direction, not the strike. Strike = FA − 90°.</span>
+      </div>
+      <div class="callout warn" style="margin-top:10px;">
+        <span class="callout-icon">⚠</span>
+        <span><b>Depth sign convention:</b> Reservoir depths (Top, GOC, OWC) are entered as <b>positive numbers</b>. The app takes the absolute value internally, so entering negative values is also fine.</span>
+      </div>
+      <div class="callout tip" style="margin-top:10px;">
+        <span class="callout-icon">✓</span>
+        <span><b>Live updates:</b> The Well Intersection Calculator and Dip &amp; Az Sweep update automatically on every input change. The Monte Carlo tool requires clicking CALCULATE because each run involves thousands of random samples.</span>
+      </div>
+      <div class="callout tip" style="margin-top:10px;">
+        <span class="callout-icon">✓</span>
+        <span><b>Trajectory plot distortion:</b> If the cross-section plot looks stretched after resizing your browser window, click the <b>Refresh</b> button in the panel header to force a clean redraw at the correct pixel ratio.</span>
+      </div>
+    </div>
+
+  </main>
+</div><!-- guide-grid -->
+
+<div class="watermark">Well Planning Suite · User Guide · All angles in degrees · Assumes no curvature of formation or well</div>
+</div><!-- app-wrapper -->
+
+<script>
+(function(){
+  const nb = document.getElementById('nb');
+  const toggle = document.getElementById('nb-toggle');
+  let open = false;
+  toggle.addEventListener('click', () => {
+    open = !open;
+    nb.classList.toggle('open', open);
+    document.body.classList.toggle('nb-open', open);
+  });
+})();
+</script>
+</body>
+</html>

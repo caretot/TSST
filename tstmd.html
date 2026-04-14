@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Well Planning Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111318;
+    --surface2: #181c23;
+    --surface3: #1e232d;
+    --border: #252b37;
+    --border2: #2e3747;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --text: #e8edf5;
+    --text2: #8a95a8;
+    --text3: #5a6475;
+    --pink: #ff3d8a;
+    --yellow: #ffd600;
+    --green: #00e676;
+    --red: #ff4444;
+    --mode-btn-color: #000;
+    /* Mode-aware accent: changes with toggle */
+    --mode-accent: #00d4ff;
+    --mode-accent-glow: rgba(0,212,255,0.35);
+    --mode-accent-bg: rgba(0,212,255,0.1);
+    --mode-accent-border: rgba(0,212,255,0.3);
+  }
+
+  body.mode-md {
+    --mode-accent: #ff6b35;
+    --mode-accent-glow: rgba(255,107,53,0.4);
+    --mode-accent-bg: rgba(255,107,53,0.1);
+    --mode-accent-border: rgba(255,107,53,0.3);
+    --mode-btn-color: #fff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ═══════════════ PAGE BODY ═══════════════ */
+  .page-body {
+    flex: 1; min-width: 0;
+    position: relative; z-index: 1;
+  }
+
+  .app-wrapper{
+  position:relative;
+  z-index:1;
+  max-width:1900px;
+  margin:0 auto;
+  padding:0 24px 60px calc(24px + (var(--nb-col) * 1));
+}
+
+  /* ═══════════════ HEADER ═══════════════ */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 0 24px; border-bottom: 1px solid var(--border);
+    margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+  }
+  .logo-group { display: flex; align-items: center; gap: 14px; }
+  .logo-icon {
+    width: 38px; height: 38px;
+    background: linear-gradient(135deg, var(--mode-accent), #0066ff);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.3s;
+  }
+  .mode-md .logo-icon { background: linear-gradient(135deg, var(--accent2), #cc3300); }
+  .logo-icon svg { width: 18px; height: 18px; }
+
+  .app-title {
+    font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 800;
+    letter-spacing: -0.02em; color: var(--text);
+    transition: all 0.25s;
+  }
+  .app-title span { color: var(--mode-accent); transition: color 0.3s; }
+  .header-meta { font-size: 0.65rem; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  .header-right { display: flex; align-items: center; gap: 16px; }
+
+  .badge {
+    background: var(--mode-accent-bg);
+    border: 1px solid var(--mode-accent-border);
+    color: var(--mode-accent);
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;
+    transition: all 0.3s;
+  }
+
+  /* ─── MODE TOGGLE SWITCH ─── */
+  .mode-toggle-wrap {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 5px 6px;
+  }
+
+  .mode-opt {
+    font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 5px 14px; border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    color: var(--text3);
+    white-space: nowrap;
+    user-select: none;
+  }
+  .mode-opt.active-tst {
+    background: var(--accent);
+    color: #000;
+    box-shadow: 0 2px 10px rgba(0,212,255,0.3);
+  }
+  .mode-opt.active-md {
+    background: var(--accent2);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(255,107,53,0.35);
+  }
+
+  .mode-sep {
+    font-size: 0.65rem; color: var(--text3);
+    font-weight: 300;
+  }
+
+  /* ═══════════════ MAIN GRID ═══════════════ */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 400px 220px 1fr;
+    gap: 20px; align-items: start;
+  }
+  @media (max-width: 1300px) { .main-grid { grid-template-columns: 380px 200px 1fr; } }
+  @media (max-width: 1050px) {
+    .main-grid { grid-template-columns: 1fr 1fr; }
+    .col-chart { grid-column: 1 / -1; }
+  }
+  @media (max-width: 700px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .col-chart { grid-column: auto; }
+  }
+
+  /* ═══════════════ PANELS ═══════════════ */
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .panel-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px; background: var(--surface2); border-bottom: 1px solid var(--border);
+  }
+  .panel-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .panel-title {
+    font-family: 'Syne', sans-serif; font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--text2);
+  }
+
+  /* Copy / Paste input buttons */
+  .input-actions {
+    display: flex; align-items: center; gap: 6px;
+    margin-left: auto;
+  }
+
+  .input-action-btn {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--surface3); border: 1px solid var(--border2);
+    color: var(--text3); padding: 4px 9px; border-radius: 5px;
+    cursor: pointer; font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.06em; text-transform: uppercase;
+    transition: color 0.14s, background 0.14s, border-color 0.14s;
+    white-space: nowrap;
+  }
+  .input-action-btn svg { width: 12px; height: 12px; flex-shrink: 0; }
+  .input-action-btn:hover { background: var(--border2); color: var(--text); border-color: var(--text3); }
+
+  .input-action-btn.flash-ok {
+    color: var(--green); border-color: rgba(0,230,118,0.5);
+    background: rgba(0,230,118,0.08);
+  }
+  .input-action-btn.flash-err {
+    color: var(--red); border-color: rgba(255,68,68,0.5);
+    background: rgba(255,68,68,0.08);
+  }
+
+  /* ─── INPUT ─── */
+  .input-section { padding: 18px; }
+  .input-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .input-table thead tr { background: var(--surface3); }
+  .input-table th {
+    padding: 8px 10px; text-align: center; color: var(--text3);
+    font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border); font-weight: 600;
+  }
+  .input-table th:first-child { text-align: left; }
+  .input-table td { padding: 6px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .input-table tr:last-child td { border-bottom: none; }
+  .var-label { font-size: 0.73rem; color: var(--text2); padding-left: 4px; white-space: nowrap; }
+  .var-unit  { font-size: 0.6rem; color: var(--text3); display: block; }
+
+  .num-input {
+    width: 100%; background: var(--surface3); border: 1px solid var(--border2);
+    color: var(--text); padding: 6px 8px; border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; text-align: center;
+    transition: border-color 0.2s, box-shadow 0.2s; -moz-appearance: textfield;
+  }
+  .num-input::-webkit-outer-spin-button,
+  .num-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .num-input:focus { outline: none; border-color: var(--mode-accent); box-shadow: 0 0 0 2px var(--mode-accent-bg); }
+  .num-input.min-input:focus { border-color: var(--accent2); box-shadow: 0 0 0 2px rgba(255,107,53,0.15); }
+  .num-input.max-input:focus { border-color: var(--pink); box-shadow: 0 0 0 2px rgba(255,61,138,0.15); }
+
+  .col-min { background: rgba(255,107,53,0.08) !important; border-color: rgba(255,107,53,0.3) !important; }
+  .col-ml  { background: rgba(255,214,0,0.08) !important;  border-color: rgba(255,214,0,0.3) !important; }
+  .col-max { background: rgba(255,61,138,0.08) !important; border-color: rgba(255,61,138,0.3) !important; }
+  .th-min { color: #ff6b35 !important; }
+  .th-ml  { color: #ffd600 !important; }
+  .th-max { color: #ff3d8a !important; }
+
+  .sim-controls { display: flex; align-items: center; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+  .sim-label { font-size: 0.7rem; color: var(--text3); white-space: nowrap; }
+  .sim-select {
+    background: var(--surface3); border: 1px solid var(--border2); color: var(--text);
+    padding: 6px 10px; border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; flex: 1; min-width: 120px;
+  }
+  .sim-select:focus { outline: none; border-color: var(--mode-accent); }
+
+  .calc-btn-row { display: flex; justify-content: center; margin-top: 14px; }
+  .calc-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: linear-gradient(135deg, var(--accent), #0077ff);
+    color: #000; border: none; padding: 11px 0; width: 220px; border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+    transition: background 0.3s, box-shadow 0.15s, opacity 0.15s; white-space: nowrap;
+  }
+  .mode-md .calc-btn {
+    background: linear-gradient(135deg, var(--accent2), #cc3300);
+    color: #fff;
+  }
+  .calc-btn:hover { box-shadow: 0 6px 20px var(--mode-accent-glow); }
+  .calc-btn:active { opacity: 0.85; }
+  .calc-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+  .calc-btn .spinner {
+    width: 14px; height: 14px; flex-shrink: 0;
+    border: 2px solid rgba(0,0,0,0.3); border-top-color: #000;
+    border-radius: 50%; animation: spin 0.7s linear infinite; display: none;
+  }
+  .mode-md .calc-btn .spinner { border-color: rgba(255,255,255,0.3); border-top-color: #fff; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hint-text {
+    margin-top: 14px; font-size: 0.65rem; color: var(--text3);
+    padding: 8px 12px; background: var(--surface2); border-radius: 6px;
+    border-left: 3px solid var(--mode-accent); line-height: 1.6; transition: border-color 0.3s;
+  }
+
+  /* Formula block */
+  .formula-block {
+    margin-top: 14px; background: var(--surface2); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2); border-radius: 8px; padding: 13px 15px 11px;
+  }
+  .mode-md .formula-block { border-left-color: var(--accent); }
+  .formula-block-title { font-size: 0.62rem; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; font-weight: 600; }
+  .formula-line { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .formula-var { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 0.85rem; }
+  .formula-eq  { color: var(--text3); font-size: 1rem; font-weight: 300; }
+  .formula-frac { display: inline-flex; flex-direction: column; align-items: center; }
+  .formula-num { border-bottom: 1px solid var(--text3); padding: 0 6px 2px; font-size: 0.85rem; }
+  .formula-den { padding: 2px 6px 0; font-size: 0.82rem; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+  .formula-where { font-size: 0.68rem; color: var(--text3); margin-bottom: 6px; font-family: 'JetBrains Mono', monospace; }
+  .formula-where code { color: var(--text2); font-size: 0.68rem; }
+  .formula-expand { background: var(--surface3); border-radius: 5px; padding: 8px 10px; font-size: 0.67rem; line-height: 1.7; color: var(--text2); }
+  .formula-expand code { font-family: 'JetBrains Mono', monospace; }
+
+  /* Formula: TST mode (shown in TST mode, hidden in MD mode) */
+  .formula-tst { display: flex; }
+  .formula-md  { display: none; }
+  .mode-md .formula-tst { display: none; }
+  .mode-md .formula-md  { display: flex; }
+
+  /* Progress */
+  .progress-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 10px; display: none; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), #0077ff); border-radius: 2px; width: 0%; transition: width 0.1s linear; }
+  .mode-md .progress-bar { background: linear-gradient(90deg, var(--accent2), #cc3300); }
+
+  /* ─── OUTPUT ─── */
+  .output-section { padding: 18px; }
+  .perc-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .perc-table thead tr { background: var(--surface3); }
+  .perc-table th {
+    padding: 7px 12px; text-align: center; color: var(--text3);
+    font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; border-bottom: 1px solid var(--border);
+  }
+  .perc-table td { padding: 5px 12px; text-align: center; border-bottom: 1px solid rgba(37,43,55,0.6); color: var(--text2); }
+  .perc-table td:first-child { color: var(--text3); font-size: 0.7rem; }
+  .perc-table td:last-child  { color: var(--text); font-weight: 600; font-size: 0.82rem; }
+  .perc-table tr:last-child td { border-bottom: none; }
+  .mean-row td { color: var(--mode-accent) !important; font-weight: 700 !important; }
+
+  .stats-cards { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+  .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .stat-card-label { font-size: 0.59rem; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px; }
+  .stat-card-value { font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700; letter-spacing: 0.02em; }
+  .stat-card-sub   { font-size: 0.58rem; color: var(--text3); margin-top: 2px; }
+
+  /* ─── CHART ─── */
+  .right-col { display: flex; flex-direction: column; gap: 20px; }
+  .chart-container { padding: 20px 20px 16px; position: relative; }
+  .chart-title { font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; color: var(--text2); letter-spacing: 0.06em; margin-bottom: 16px; text-transform: uppercase; }
+  .chart-wrap  { position: relative; height: 380px; }
+  .chart-legend { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.68rem; color: var(--text2); }
+  .legend-dot  { width: 10px; height: 3px; border-radius: 2px; }
+
+  .dist-bar {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 1px; background: var(--border); border-radius: 8px; overflow: hidden; margin: 0 20px 20px;
+  }
+  .dist-cell { background: var(--surface2); padding: 10px 8px; text-align: center; }
+  .dist-cell-label { font-size: 0.6rem; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 3px; }
+  .dist-cell-val { font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; font-weight: 700; }
+
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; color: var(--text3); gap: 12px; }
+  .empty-state svg { opacity: 0.2; }
+  .empty-state-text { font-size: 0.75rem; letter-spacing: 0.06em; text-align: center; line-height: 1.8; }
+
+  .formula-note {
+    margin: 0 20px 20px; padding: 12px 14px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 0.65rem; color: var(--text3); line-height: 1.7;
+  }
+  .formula-note code { color: var(--mode-accent); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; transition: color 0.3s; }
+
+  /* ─── SENSITIVITY MATRIX ─── */
+  .matrix-section { margin-top: 28px; }
+  .matrix-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .matrix-header {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 18px; background: var(--surface2); border-bottom: 1px solid var(--border); flex-wrap: wrap;
+  }
+  .matrix-header-left { display: flex; align-items: center; gap: 10px; }
+  .matrix-desc { font-size: 0.6rem; color: var(--text3); letter-spacing: 0.05em; line-height: 1.5; }
+  .matrix-body { padding: 18px; overflow-x: auto; }
+  .matrix-table { width: 100%; border-collapse: collapse; font-size: 0.74rem; min-width: 600px; }
+  .matrix-table thead tr { background: var(--surface3); }
+  .matrix-table th {
+    padding: 8px 12px; text-align: center; color: var(--text3);
+    font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border); font-weight: 600; white-space: nowrap;
+  }
+  .matrix-table th:first-child { text-align: left; min-width: 140px; }
+  .matrix-table th.th-base { color: var(--mode-accent); transition: color 0.3s; }
+  .matrix-table td { padding: 7px 12px; border-bottom: 1px solid rgba(37,43,55,0.5); text-align: center; white-space: nowrap; }
+  .matrix-table tr:last-child td { border-bottom: none; }
+  .matrix-table td:first-child { text-align: left; color: var(--text2); font-size: 0.7rem; }
+  .param-chip { display: inline-flex; align-items: center; gap: 6px; }
+  .param-chip-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .angle-cell { font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 0.76rem; border-radius: 4px; padding: 4px 10px !important; }
+  .matrix-table td.col-base { background: var(--mode-accent-bg); color: var(--mode-accent); font-weight: 700; transition: all 0.3s; }
+  .matrix-table tr.active-row td:first-child { color: var(--text); }
+  .delta-badge { display: inline-block; font-size: 0.58rem; font-family: 'JetBrains Mono', monospace; padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle; }
+  .delta-pos  { background: rgba(255,61,138,0.15); color: var(--pink); }
+  .delta-neg  { background: rgba(0,212,255,0.12); color: var(--accent); }
+  .delta-zero { color: var(--text3); }
+  .matrix-base-row td { background: var(--mode-accent-bg); border-top: 1px solid var(--mode-accent-border); border-bottom: 1px solid var(--mode-accent-border) !important; color: var(--mode-accent) !important; font-weight: 600; transition: all 0.3s; }
+  .matrix-base-row td:first-child { color: var(--mode-accent) !important; }
+
+  .watermark { text-align: center; margin-top: 32px; font-size: 0.62rem; color: var(--text3); letter-spacing: 0.08em; }
+
+  /* Mode transition */
+  .app-title, .badge, .logo-icon, .hint-text, .calc-btn, .progress-bar,
+  .mean-row td, .formula-block { transition: all 0.3s; }
+</style>
+
+<style id="NAVBAR_CSS_PASTE_THIS">
+/* ── Navbar ───────────────────────────────────────────────────────────────── */
+:root { --nb-w: 224px; --nb-col: 46px; }
+
+.nb {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: var(--nb-col);
+  background: #0d1017;
+  border-right: 1px solid #1e2530;
+  display: flex; flex-direction: column;
+  z-index: 200;
+  overflow: hidden;
+  transition: width 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+
+.nb.open { width: var(--nb-w); }
+
+/* Toggle button (hamburger / X) */
+.nb-toggle {
+  display: flex; align-items: center; justify-content: center;
+  width: var(--nb-col); height: var(--nb-col); flex-shrink: 0;
+  cursor: pointer; border-bottom: 1px solid #1e2530;
+  background: transparent; border-left: none; border-top: none; border-right: none;
+  padding: 0; position: relative;
+}
+.nb-toggle-icon { width: 18px; height: 14px; position: relative; }
+.nb-toggle-icon span {
+  display: block; position: absolute; left: 0; right: 0; height: 1.5px;
+  background: #8a95a8; border-radius: 1px;
+  transition: transform 0.22s ease, opacity 0.18s ease, top 0.22s ease;
+}
+.nb-toggle-icon span:nth-child(1) { top: 0; }
+.nb-toggle-icon span:nth-child(2) { top: 6px; }
+.nb-toggle-icon span:nth-child(3) { top: 12px; }
+/* Open state → X */
+.nb.open .nb-toggle-icon span:nth-child(1) { top: 6px; transform: rotate(45deg); background: #00d4ff; }
+.nb.open .nb-toggle-icon span:nth-child(2) { opacity: 0; transform: translateX(-6px); }
+.nb.open .nb-toggle-icon span:nth-child(3) { top: 6px; transform: rotate(-45deg); background: #00d4ff; }
+
+/* Section label */
+.nb-section {
+  font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #3a4558; padding: 14px 14px 5px;
+  white-space: nowrap; overflow: hidden;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.16s;
+}
+.nb.open .nb-section { opacity: 1; }
+
+/* Nav items */
+.nb-items { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 4px 0; }
+.nb-items::-webkit-scrollbar { width: 3px; }
+.nb-items::-webkit-scrollbar-thumb { background: #1e2530; border-radius: 2px; }
+
+.nb-item {
+  display: flex; align-items: center; gap: 0;
+  padding: 0; height: 40px;
+  color: #5a6880; font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem; letter-spacing: 0.03em;
+  text-decoration: none; white-space: nowrap;
+  border-left: 2px solid transparent;
+  cursor: pointer; background: transparent; width: 100%;
+  transition: color 0.14s, background 0.14s, border-color 0.14s;
+  position: relative;
+}
+.nb-item:hover { color: #8a95a8; background: rgba(255,255,255,0.03); }
+.nb-item.active {
+  color: #00d4ff; border-left-color: #00d4ff;
+  background: rgba(0,212,255,0.07);
+}
+
+/* Icon slot — always 46px wide so it lines up with the collapsed bar */
+.nb-icon {
+  width: var(--nb-col); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.nb-icon svg { width: 15px; height: 15px; }
+
+.nb-label {
+  flex: 1; overflow: hidden; text-overflow: ellipsis;
+  padding-right: 12px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.16s;
+}
+.nb.open .nb-label { opacity: 1; pointer-events: auto; }
+
+/* Tooltip on hover (collapsed state only) */
+.nb-item::after {
+  content: attr(data-tip);
+  position: absolute; left: calc(var(--nb-col) + 8px); top: 50%;
+  transform: translateY(-50%);
+  background: #181c23; border: 1px solid #252b37;
+  color: #e8edf5; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace;
+  padding: 5px 10px; border-radius: 5px;
+  white-space: nowrap; pointer-events: none; z-index: 300;
+  display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.nb:not(.open) .nb-item:hover::after { display: block; }
+
+/* Divider */
+.nb-divider { height: 1px; background: #1a2030; margin: 5px 14px; }
+
+/* Footer */
+.nb-footer {
+  padding: 10px 14px; border-top: 1px solid #1e2530;
+  font-size: 0.52rem; color: #3a4558; font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap; overflow: hidden;
+  opacity: 0; transition: opacity 0.16s; flex-shrink: 0;
+}
+.nb.open .nb-footer { opacity: 1; }
+
+/* Smooth dark overlay behind main content */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 150;
+  pointer-events: none;
+  transition: background 0.25s ease;
+}
+
+body.nb-open::after {
+  background: rgba(0, 0, 0, 0.5);
+}
+</style>
+
+</head>
+<body id="appBody">
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<nav class="nb" id="nb">
+
+  <!-- Toggle button -->
+  <button class="nb-toggle" id="nb-toggle" aria-label="Toggle navigation">
+    <div class="nb-toggle-icon">
+      <span></span><span></span><span></span>
+    </div>
+  </button>
+
+  <div class="nb-section">Navigation</div>
+
+  <div class="nb-items">
+
+    <!-- Well Intersection Calculator -->
+    <a class="nb-item" id="nav-intersection" href="wellintersection.html"
+       data-tip="Well Intersection Calculator">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="2" x2="12" y2="22"/>
+          <path d="M8 6h8M9 10h6M10 14h4M11 18h2"/>
+        </svg>
+      </span>
+      <span class="nb-label">Well Intersection</span>
+    </a>
+
+    <!-- Dip & Azimuth Sweep -->
+    <a class="nb-item" id="nav-sweep" href="effectseries.html"
+       data-tip="Dip & Azimuth Sweep">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </span>
+      <span class="nb-label">Dip &amp; Az Sweep</span>
+    </a>
+
+    <!-- Monte Carlo Calculator -->
+    <a class="nb-item active" id="nav-montecarlo" href="tstmd.html"
+       data-tip="TST ↔ MD Monte Carlo">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/>
+          <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+      </span>
+      <span class="nb-label">TST ↔ MD Monte Carlo</span>
+    </a>
+
+    <div class="nb-divider"></div>
+
+    <!-- Guide -->
+    <a class="nb-item" id="nav-guide" href="guide.html"
+       data-tip="User Guide">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+      </span>
+      <span class="nb-label">Guide</span>
+    </a>
+
+    <!-- About -->
+    <a class="nb-item" id="nav-about" href="about.html"
+       data-tip="About">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      </span>
+      <span class="nb-label">About</span>
+    </a>
+
+  </div><!-- .nb-items -->
+
+  <div class="nb-footer">Well Planning Suite · v1.0</div>
+</nav>
+<!-- ═══════════ PAGE BODY ═══════════ -->
+<div class="page-body" id="pageBody">
+<div class="app-wrapper">
+
+  <header>
+    <div class="logo-group">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="2" x2="12" y2="22"/>
+          <path d="M8 6h8M9 10h6M10 14h4M11 18h2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="app-title" id="appTitle">TST <span id="titleArrow">→</span> MD Calculator</div>
+        <div class="header-meta">Well Planning · Monte Carlo Simulation</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <!-- MODE TOGGLE -->
+      <div class="mode-toggle-wrap">
+        <div class="mode-opt active-tst" id="toggleTST" onclick="setMode('tst')">TST → MD</div>
+        <span class="mode-sep">/</span>
+        <div class="mode-opt" id="toggleMD" onclick="setMode('md')">MD → TST</div>
+      </div>
+      <div class="badge" id="headerBadge">Monte Carlo · Probabilistic</div>
+    </div>
+  </header>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+
+    <!-- COL 1: INPUT -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-dot" style="background:#ffd600"></div>
+          <span class="panel-title">Input Parameters</span>
+          <div class="input-actions">
+            <button class="input-action-btn" id="copyInputsBtn" onclick="copyInputs()" title="Copy all input values to clipboard">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span class="input-action-label">Copy</span>
+            </button>
+            <button class="input-action-btn" id="pasteInputsBtn" onclick="pasteInputs()" title="Paste input values from clipboard">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                <rect x="8" y="2" width="8" height="4" rx="1"/>
+              </svg>
+              <span class="input-action-label">Paste</span>
+            </button>
+          </div>
+        </div>
+        <div class="input-section">
+          <table class="input-table">
+            <thead>
+              <tr>
+                <th>Variable</th>
+                <th class="th-min">Minimum</th>
+                <th class="th-ml">Most Likely</th>
+                <th class="th-max">Maximum</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Row 1: TST (mode=tst) or MD (mode=md) -->
+              <tr>
+                <td><span class="var-label" id="row1Label">TST<span class="var-unit">(m)</span></span></td>
+                <td><input class="num-input min-input col-min" id="primary_min" type="number" value="303" step="0.1"></td>
+                <td><input class="num-input col-ml"            id="primary_ml"  type="number" value="313" step="0.1"></td>
+                <td><input class="num-input max-input col-max" id="primary_max" type="number" value="323" step="0.1"></td>
+              </tr>
+              <tr>
+                <td><span class="var-label">Form. Dip<span class="var-unit">(degrees)</span></span></td>
+                <td><input class="num-input min-input col-min" id="dip_min" type="number" value="16" step="0.1"></td>
+                <td><input class="num-input col-ml"            id="dip_ml"  type="number" value="26" step="0.1"></td>
+                <td><input class="num-input max-input col-max" id="dip_max" type="number" value="36" step="0.1"></td>
+              </tr>
+              <tr>
+                <td><span class="var-label">Form. Azimuth<span class="var-unit">(degrees)</span></span></td>
+                <td><input class="num-input min-input col-min" id="fa_min" type="number" value="27" step="0.1"></td>
+                <td><input class="num-input col-ml"            id="fa_ml"  type="number" value="37" step="0.1"></td>
+                <td><input class="num-input max-input col-max" id="fa_max" type="number" value="47" step="0.1"></td>
+              </tr>
+              <tr>
+                <td><span class="var-label">Well Inclination<span class="var-unit">(degrees)</span></span></td>
+                <td><input class="num-input min-input col-min" id="wi_min" type="number" value="29" step="0.1"></td>
+                <td><input class="num-input col-ml"            id="wi_ml"  type="number" value="39" step="0.1"></td>
+                <td><input class="num-input max-input col-max" id="wi_max" type="number" value="49" step="0.1"></td>
+              </tr>
+              <tr>
+                <td><span class="var-label">Well Azimuth<span class="var-unit">(degrees)</span></span></td>
+                <td><input class="num-input min-input col-min" id="wa_min" type="number" value="243" step="0.1"></td>
+                <td><input class="num-input col-ml"            id="wa_ml"  type="number" value="253" step="0.1"></td>
+                <td><input class="num-input max-input col-max" id="wa_max" type="number" value="263" step="0.1"></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="sim-controls">
+            <span class="sim-label">Iterations:</span>
+            <select class="sim-select" id="n_iter">
+              <option value="1000">1,000</option>
+              <option value="5000">5,000</option>
+              <option value="10000">10,000</option>
+              <option value="50000" selected>50,000</option>
+            </select>
+          </div>
+
+          <div class="calc-btn-row">
+            <button class="calc-btn" id="calcBtn" onclick="runSimulation()">
+              <div class="spinner" id="spinner"></div>
+              <span id="calcBtnText">&#9654; CALCULATE</span>
+            </button>
+          </div>
+
+          <div class="progress-bar-wrap" id="progressWrap">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+
+          <!-- Formula block: TST mode -->
+          <div class="formula-block">
+            <div class="formula-block-title" id="formulaTitle">MD Formula</div>
+
+            <!-- TST→MD formula -->
+            <div class="formula-line formula-tst">
+              <span class="formula-var" style="color:var(--accent)">MD</span>
+              <span class="formula-eq">=</span>
+              <span class="formula-frac">
+                <span class="formula-num"><span class="formula-var" style="color:var(--yellow)">TST</span></span>
+                <span class="formula-den">sin( <span class="formula-var" style="color:var(--accent2)">α</span> )</span>
+              </span>
+            </div>
+
+            <!-- MD→TST formula -->
+            <div class="formula-line formula-md">
+              <span class="formula-var" style="color:var(--accent2)">TST</span>
+              <span class="formula-eq">=</span>
+              <span class="formula-var" style="color:var(--accent)">MD</span>
+              <span class="formula-eq">×</span>
+              <span class="formula-var" style="color:var(--yellow)">sin( α )</span>
+            </div>
+
+            <div class="formula-where">where <span class="formula-var" style="color:var(--accent2)">α</span> = apparent dip = <code>|90° − arccos( n̂<sub>form</sub> · d̂<sub>well</sub> )|</code></div>
+            <div class="formula-expand">
+              <code>
+                <span style="color:var(--text3)">dot =</span>
+                cos(90°−<span style="color:var(--yellow)">FD</span>)·cos(<span style="color:var(--pink)">FA</span>+180°)·cos(90°−<span style="color:var(--green)">WI</span>)·cos(<span style="color:var(--accent)">WA</span>)<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;+ cos(90°−<span style="color:var(--yellow)">FD</span>)·sin(<span style="color:var(--pink)">FA</span>+180°)·cos(90°−<span style="color:var(--green)">WI</span>)·sin(<span style="color:var(--accent)">WA</span>)<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;+ sin(90°−<span style="color:var(--yellow)">FD</span>)·sin(90°−<span style="color:var(--green)">WI</span>)
+              </code>
+            </div>
+          </div>
+
+          <div class="hint-text">
+            Fill yellow cells (Most Likely), adjust Min/Max bounds, then click CALCULATE.<br>
+            Each variable sampled from a triangular distribution via Monte Carlo.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 2: OUTPUT PERCENTILES -->
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-dot" id="outputDot" style="background:#00d4ff"></div>
+          <span class="panel-title" id="outputTitle">Output — MD Percentiles</span>
+        </div>
+        <div class="output-section">
+          <table class="perc-table">
+            <thead>
+              <tr>
+                <th>Percentile</th>
+                <th id="percColHead">MD (m)</th>
+              </tr>
+            </thead>
+            <tbody id="percBody">
+              <tr><td colspan="2" style="text-align:center;color:var(--text3);padding:20px;font-size:0.72rem;">Run simulation to see results</td></tr>
+            </tbody>
+          </table>
+          <div class="stats-cards">
+            <div class="stat-card" style="border-color:rgba(0,212,255,0.3)" id="sc_card1">
+              <div class="stat-card-label" id="sc_label1">P50 (Median)</div>
+              <div class="stat-card-value" style="color:var(--mode-accent)" id="sc_p50">—</div>
+              <div class="stat-card-sub" id="sc_sub1">50th percentile MD</div>
+            </div>
+            <div class="stat-card" style="border-color:rgba(57,255,20,0.3)">
+              <div class="stat-card-label" id="sc_label2">Mean MD</div>
+              <div class="stat-card-value" style="color:var(--green)" id="sc_mean">—</div>
+              <div class="stat-card-sub" id="sc_sub2">Expected value</div>
+            </div>
+            <div class="stat-card" style="border-color:rgba(255,214,0,0.3)">
+              <div class="stat-card-label">P10 – P90 Range</div>
+              <div class="stat-card-value" style="color:var(--yellow);font-size:0.95rem;" id="sc_range">—</div>
+              <div class="stat-card-sub">Uncertainty spread</div>
+            </div>
+            <div class="stat-card" style="border-color:rgba(255,107,53,0.3)" id="sc_card4">
+              <div class="stat-card-label">Std Deviation</div>
+              <div class="stat-card-value" style="color:var(--accent2)" id="sc_std">—</div>
+              <div class="stat-card-sub" id="sc_sub4">σ of MD distribution</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COL 3: CHART -->
+    <div class="right-col col-chart">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-dot" style="background:#ff3d8a"></div>
+          <span class="panel-title" id="chartPanelTitle">Frequency Plot vs MD — Cumulative Distribution</span>
+        </div>
+        <div class="chart-container">
+          <div class="chart-title">Cumulative Frequency (%)</div>
+          <div class="chart-wrap">
+            <canvas id="mdChart"></canvas>
+            <div class="empty-state" id="emptyState">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6"  y1="20" x2="6"  y2="14"/>
+              </svg>
+              <div class="empty-state-text">Enter parameters and click CALCULATE<br>to run the Monte Carlo simulation.</div>
+            </div>
+          </div>
+          <div class="chart-legend" id="chartLegend" style="display:none">
+            <div class="legend-item"><div class="legend-dot" style="background:#ff4444"></div>CDF Curve</div>
+            <div class="legend-item"><div class="legend-dot" id="meanLegendDot" style="background:#00d4ff;width:2px;height:14px;border-radius:1px"></div>Mean</div>
+          </div>
+        </div>
+        <div class="dist-bar" id="distBar" style="display:none">
+          <div class="dist-cell"><div class="dist-cell-label">P10</div><div class="dist-cell-val" style="color:#ff6b35" id="db_p10">—</div></div>
+          <div class="dist-cell"><div class="dist-cell-label">P25</div><div class="dist-cell-val" style="color:#ffd600" id="db_p25">—</div></div>
+          <div class="dist-cell"><div class="dist-cell-label">P50</div><div class="dist-cell-val" id="db_p50" style="color:#00d4ff">—</div></div>
+          <div class="dist-cell"><div class="dist-cell-label">P75</div><div class="dist-cell-val" style="color:#ffd600" id="db_p75">—</div></div>
+          <div class="dist-cell"><div class="dist-cell-label">P90</div><div class="dist-cell-val" style="color:#ff6b35" id="db_p90">—</div></div>
+        </div>
+        <div class="formula-note">
+          <strong style="color:var(--text2)" id="fnoteLabel">MD Formula:</strong><br>
+          <code id="fnoteCode">MD = TST / sin( |90° − arccos( cos(90°−FD)·cos(FA+180°)·cos(90°−WI)·cos(WA) + cos(90°−FD)·sin(FA+180°)·cos(90°−WI)·sin(WA) + sin(90°−FD)·sin(90°−WI) )| )</code>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end main-grid -->
+
+  <!-- SENSITIVITY MATRIX -->
+  <div class="matrix-section">
+    <div class="matrix-panel">
+      <div class="matrix-header">
+        <div class="matrix-header-left">
+          <div class="panel-dot" style="background:#39ff14"></div>
+          <span class="panel-title">Intersection Angle Sensitivity Matrix</span>
+        </div>
+        <div class="matrix-desc">
+          Each row varies one parameter across Min / Most Likely / Max while all others are held at Most Likely.
+          Angle = |90° − arccos( n̂<sub>formation</sub> · d̂<sub>well</sub> )|
+        </div>
+      </div>
+      <div class="matrix-body">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>Parameter varied</th>
+              <th class="th-min" style="color:#ff6b35">Min value</th>
+              <th class="th-min" style="color:#ff6b35">Angle at Min (°)</th>
+              <th class="th-ml" style="color:#ffd600">Most Likely</th>
+              <th class="th-base">Angle at ML (°) — Base</th>
+              <th class="th-max" style="color:#ff3d8a">Max value</th>
+              <th class="th-max" style="color:#ff3d8a">Angle at Max (°)</th>
+              <th style="color:var(--text3)">Range (°)</th>
+            </tr>
+          </thead>
+          <tbody id="matrixBody">
+            <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px;font-size:0.72rem;">Run simulation to populate matrix</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="watermark" id="watermark">Well Planning Tool · TST→MD Monte Carlo · Triangular Distribution Sampling</div>
+
+</div>
+</div>
+<script id="NAVBAR_JS_PASTE_THIS">
+(function(){
+  const nb     = document.getElementById('nb');
+  const toggle = document.getElementById('nb-toggle');
+  let open = false;
+
+  toggle.addEventListener('click', () => {
+    open = !open;
+    nb.classList.toggle('open', open);
+    document.body.classList.toggle('nb-open', open);
+  });
+
+  // Mark active page — body must have id="page-XXX"
+  const pageMap = {
+    'page-intersection': 'nav-intersection',
+    'page-sweep':        'nav-sweep',
+    'page-montecarlo':   'nav-montecarlo',
+    'page-guide':        'nav-guide',
+    'page-about':        'nav-about',
+  };
+  const bodyId = document.body.id;
+  if(bodyId && pageMap[bodyId]){
+    const el = document.getElementById(pageMap[bodyId]);
+    if(el) el.classList.add('active');
+  }
+})();
+</script>
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let currentMode = 'tst'; // 'tst' | 'md'
+let chartInstance = null;
+
+// ═══════════════════════════════════════════════════════
+// MODE SWITCH
+// ═══════════════════════════════════════════════════════
+function setMode(mode) {
+  if (mode === currentMode) return;
+  currentMode = mode;
+
+  const body     = document.getElementById('appBody');
+  const isMD     = mode === 'md';
+
+  body.classList.toggle('mode-md', isMD);
+
+  // Toggle button states
+  document.getElementById('toggleTST').className = 'mode-opt' + (isMD ? '' : ' active-tst');
+  document.getElementById('toggleMD').className  = 'mode-opt' + (isMD ? ' active-md' : '');
+
+  // Header title
+  document.getElementById('appTitle').innerHTML = isMD
+    ? 'MD <span id="titleArrow">→</span> TST Calculator'
+    : 'TST <span id="titleArrow">→</span> MD Calculator';
+
+  // First row label
+  document.getElementById('row1Label').innerHTML = isMD
+    ? 'MD<span class="var-unit">(m)</span>'
+    : 'TST<span class="var-unit">(m)</span>';
+
+  // Default values for primary input
+  if (isMD) {
+    document.getElementById('primary_min').value = 323;
+    document.getElementById('primary_ml').value  = 333;
+    document.getElementById('primary_max').value = 343;
+  } else {
+    document.getElementById('primary_min').value = 303;
+    document.getElementById('primary_ml').value  = 313;
+    document.getElementById('primary_max').value = 323;
+  }
+
+  // Output panel
+  const outVar = isMD ? 'TST' : 'MD';
+  document.getElementById('outputDot').style.background = isMD ? '#ff6b35' : '#00d4ff';
+  document.getElementById('outputTitle').textContent = `Output — ${outVar} Percentiles`;
+  document.getElementById('percColHead').textContent = `${outVar} (m)`;
+  document.getElementById('sc_label1').textContent = `P50 (Median)`;
+  document.getElementById('sc_sub1').textContent   = `50th percentile ${outVar}`;
+  document.getElementById('sc_label2').textContent = `Mean ${outVar}`;
+  document.getElementById('sc_sub2').textContent   = `Expected value`;
+  document.getElementById('sc_sub4').textContent   = `σ of ${outVar} distribution`;
+
+  // Chart panel
+  document.getElementById('chartPanelTitle').textContent = `Frequency Plot vs ${outVar} — Cumulative Distribution`;
+  document.getElementById('meanLegendDot').style.background = isMD ? '#ff6b35' : '#00d4ff';
+  document.getElementById('db_p50').style.color = isMD ? '#ff6b35' : '#00d4ff';
+
+  // Formula label & title
+  document.getElementById('formulaTitle').textContent = isMD ? 'TST Formula' : 'MD Formula';
+  document.getElementById('fnoteLabel').textContent   = isMD ? 'TST Formula:' : 'MD Formula:';
+  document.getElementById('fnoteCode').textContent    = isMD
+    ? 'TST = MD × sin( |90° − arccos( cos(90°−FD)·cos(FA+180°)·cos(90°−WI)·cos(WA) + cos(90°−FD)·sin(FA+180°)·cos(90°−WI)·sin(WA) + sin(90°−FD)·sin(90°−WI) )| )'
+    : 'MD = TST / sin( |90° − arccos( cos(90°−FD)·cos(FA+180°)·cos(90°−WI)·cos(WA) + cos(90°−FD)·sin(FA+180°)·cos(90°−WI)·sin(WA) + sin(90°−FD)·sin(90°−WI) )| )';
+
+  // Watermark
+  document.getElementById('watermark').textContent = isMD
+    ? 'Well Planning Tool · MD→TST Monte Carlo · Triangular Distribution Sampling'
+    : 'Well Planning Tool · TST→MD Monte Carlo · Triangular Distribution Sampling';
+
+  // Clear results and re-run
+  clearResults();
+  runSimulation();
+}
+
+function clearResults() {
+  document.getElementById('percBody').innerHTML = '<tr><td colspan="2" style="text-align:center;color:var(--text3);padding:20px;font-size:0.72rem;">Run simulation to see results</td></tr>';
+  document.getElementById('sc_p50').textContent   = '—';
+  document.getElementById('sc_mean').textContent  = '—';
+  document.getElementById('sc_range').textContent = '—';
+  document.getElementById('sc_std').textContent   = '—';
+  ['db_p10','db_p25','db_p50','db_p75','db_p90'].forEach(id => document.getElementById(id).textContent = '—');
+  document.getElementById('distBar').style.display = 'none';
+  document.getElementById('chartLegend').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'flex';
+  document.getElementById('matrixBody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px;font-size:0.72rem;">Run simulation to populate matrix</td></tr>';
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+}
+
+// ═══════════════════════════════════════════════════════
+// MATH
+// ═══════════════════════════════════════════════════════
+function sampleTriangular(min, ml, max) {
+  const u = Math.random();
+  const fc = (ml - min) / (max - min);
+  if (u < fc) return min + Math.sqrt(u * (max - min) * (ml - min));
+  return max - Math.sqrt((1 - u) * (max - min) * (max - ml));
+}
+
+function calcAngle(fd, fa, wi, wa) {
+  const toR = d => d * Math.PI / 180;
+  const dot =
+    Math.cos(toR(90-fd)) * Math.cos(toR(fa+180)) * Math.cos(toR(90-wi)) * Math.cos(toR(wa)) +
+    Math.cos(toR(90-fd)) * Math.sin(toR(fa+180)) * Math.cos(toR(90-wi)) * Math.sin(toR(wa)) +
+    Math.sin(toR(90-fd)) * Math.sin(toR(90-wi));
+  return Math.abs(90 - Math.acos(Math.max(-1, Math.min(1, dot))) * 180 / Math.PI);
+}
+
+function calcResult(primary, fd, fa, wi, wa) {
+  const toR = d => d * Math.PI / 180;
+  const angle = calcAngle(fd, fa, wi, wa);
+  if (angle <= 0.001) return currentMode === 'tst' ? Infinity : 0;
+  return currentMode === 'tst'
+    ? primary / Math.sin(toR(angle))   // TST→MD: MD = TST / sin(α)
+    : primary * Math.sin(toR(angle));  // MD→TST: TST = MD × sin(α)
+}
+
+function percentile(sorted, p) {
+  const idx = (p / 100) * (sorted.length - 1);
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo];
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+// ═══════════════════════════════════════════════════════
+// SENSITIVITY MATRIX
+// ═══════════════════════════════════════════════════════
+function buildMatrix(get) {
+  const base = { fd: get('dip_ml'), fa: get('fa_ml'), wi: get('wi_ml'), wa: get('wa_ml') };
+  const baseAngle = calcAngle(base.fd, base.fa, base.wi, base.wa);
+
+  const params = [
+    { label:'Form. Dip',        color:'#ffd600', minId:'dip_min', mlId:'dip_ml', maxId:'dip_max', unit:'°', varKey:'fd', others:{fa:base.fa,wi:base.wi,wa:base.wa} },
+    { label:'Form. Azimuth',    color:'#ff3d8a', minId:'fa_min',  mlId:'fa_ml',  maxId:'fa_max',  unit:'°', varKey:'fa', others:{fd:base.fd,wi:base.wi,wa:base.wa} },
+    { label:'Well Inclination', color:'#00e676', minId:'wi_min',  mlId:'wi_ml',  maxId:'wi_max',  unit:'°', varKey:'wi', others:{fd:base.fd,fa:base.fa,wa:base.wa} },
+    { label:'Well Azimuth',     color:'#00d4ff', minId:'wa_min',  mlId:'wa_ml',  maxId:'wa_max',  unit:'°', varKey:'wa', others:{fd:base.fd,fa:base.fa,wi:base.wi} },
+  ];
+
+  const tbody = document.getElementById('matrixBody');
+  tbody.innerHTML = '';
+
+  function angleFor(p, val) {
+    const args = {...p.others}; args[p.varKey] = val;
+    return calcAngle(args.fd, args.fa, args.wi, args.wa);
+  }
+  function angleColor(a, b) {
+    const d = a - b, abs = Math.abs(d);
+    if (abs < 0.5) return 'rgba(255,255,255,0.08)';
+    if (abs < 2)   return d > 0 ? 'rgba(255,214,0,0.12)'  : 'rgba(0,212,255,0.10)';
+    if (abs < 5)   return d > 0 ? 'rgba(255,107,53,0.18)' : 'rgba(0,212,255,0.16)';
+    return d > 0 ? 'rgba(255,61,138,0.22)' : 'rgba(57,255,20,0.14)';
+  }
+  function deltaBadge(a, b) {
+    const d = a - b;
+    if (Math.abs(d) < 0.05) return `<span class="delta-badge delta-zero">±0</span>`;
+    const s = d > 0 ? '+' : '';
+    return `<span class="delta-badge ${d>0?'delta-pos':'delta-neg'}">${s}${d.toFixed(2)}</span>`;
+  }
+
+  params.forEach(p => {
+    const vMin=get(p.minId), vML=get(p.mlId), vMax=get(p.maxId);
+    const aMin=angleFor(p,vMin), aML=angleFor(p,vML), aMax=angleFor(p,vMax);
+    const range=Math.abs(aMax-aMin);
+    const tr = document.createElement('tr');
+    tr.classList.add('active-row');
+    tr.innerHTML = `
+      <td><span class="param-chip"><span class="param-chip-dot" style="background:${p.color}"></span>${p.label}</span></td>
+      <td style="color:var(--accent2)">${vMin.toFixed(1)}${p.unit}</td>
+      <td class="angle-cell" style="background:${angleColor(aMin,baseAngle)}">${aMin.toFixed(2)}°${deltaBadge(aMin,baseAngle)}</td>
+      <td style="color:var(--yellow)">${vML.toFixed(1)}${p.unit}</td>
+      <td class="angle-cell col-base">${aML.toFixed(2)}°</td>
+      <td style="color:var(--pink)">${vMax.toFixed(1)}${p.unit}</td>
+      <td class="angle-cell" style="background:${angleColor(aMax,baseAngle)}">${aMax.toFixed(2)}°${deltaBadge(aMax,baseAngle)}</td>
+      <td style="color:var(--text2);font-family:'JetBrains Mono',monospace;font-weight:600">${range.toFixed(2)}°</td>`;
+    tbody.appendChild(tr);
+  });
+
+  const btr = document.createElement('tr');
+  btr.classList.add('matrix-base-row');
+  btr.innerHTML = `
+    <td colspan="4" style="text-align:right;font-size:0.62rem;letter-spacing:0.08em;text-transform:uppercase;padding-right:16px;">Base case (all Most Likely)</td>
+    <td class="angle-cell" style="font-weight:700">${baseAngle.toFixed(2)}°</td>
+    <td colspan="3" style="color:var(--text3);font-size:0.62rem;text-align:left;padding-left:10px;">← intersection angle when all params are at Most Likely</td>`;
+  tbody.appendChild(btr);
+}
+
+// ═══════════════════════════════════════════════════════
+// COPY / PASTE INPUTS
+// ═══════════════════════════════════════════════════════
+const INPUT_IDS = [
+  'primary_min','primary_ml','primary_max',
+  'dip_min','dip_ml','dip_max',
+  'fa_min','fa_ml','fa_max',
+  'wi_min','wi_ml','wi_max',
+  'wa_min','wa_ml','wa_max'
+];
+
+function flashBtn(id, ok) {
+  const btn = document.getElementById(id);
+  const cls = ok ? 'flash-ok' : 'flash-err';
+  btn.classList.add(cls);
+  setTimeout(() => btn.classList.remove(cls), 1200);
+}
+
+// Write text using execCommand fallback (works in sandboxed iframes)
+function writeToClipboard(text) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch { return false; }
+}
+
+// Store last copied string in memory as fallback when paste is also blocked
+let _clipboardStore = null;
+
+function copyInputs() {
+  const data = { mode: currentMode };
+  INPUT_IDS.forEach(id => { data[id] = document.getElementById(id).value; });
+  const json = JSON.stringify(data);
+  _clipboardStore = json; // always keep in memory
+
+  const lbl = document.querySelector('#copyInputsBtn .input-action-label');
+
+  // Try modern API first, fall back to execCommand
+  const modernOk = (navigator.clipboard && navigator.clipboard.writeText)
+    ? navigator.clipboard.writeText(json).then(() => true).catch(() => false)
+    : Promise.resolve(false);
+
+  modernOk.then(ok => {
+    if (!ok) ok = writeToClipboard(json);
+    flashBtn('copyInputsBtn', true); // always succeed visually — data is in memory
+    lbl.textContent = 'Copied!';
+    setTimeout(() => { lbl.textContent = 'Copy'; }, 1400);
+  });
+}
+
+function pasteInputs() {
+  const lbl = document.querySelector('#pasteInputsBtn .input-action-label');
+
+  function applyData(text) {
+    let data;
+    try { data = JSON.parse(text); } catch { flashBtn('pasteInputsBtn', false); return; }
+    // Never switch mode on paste — always fill values into whatever mode is currently active
+    let filled = 0;
+    INPUT_IDS.forEach(id => {
+      if (data[id] !== undefined) {
+        document.getElementById(id).value = data[id];
+        filled++;
+      }
+    });
+    if (filled > 0) {
+      flashBtn('pasteInputsBtn', true);
+      lbl.textContent = 'Pasted!';
+      setTimeout(() => { lbl.textContent = 'Paste'; }, 1400);
+    } else {
+      flashBtn('pasteInputsBtn', false);
+    }
+  }
+
+  // Try modern clipboard API, fall back to in-memory store
+  if (navigator.clipboard && navigator.clipboard.readText) {
+    navigator.clipboard.readText()
+      .then(text => applyData(text))
+      .catch(() => {
+        // Clipboard read blocked — use memory store
+        if (_clipboardStore) applyData(_clipboardStore);
+        else flashBtn('pasteInputsBtn', false);
+      });
+  } else {
+    // No clipboard API at all — use memory store
+    if (_clipboardStore) applyData(_clipboardStore);
+    else flashBtn('pasteInputsBtn', false);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SIMULATION
+// ═══════════════════════════════════════════════════════
+function runSimulation() {
+  const btn     = document.getElementById('calcBtn');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('calcBtnText');
+  const pw      = document.getElementById('progressWrap');
+  const pb      = document.getElementById('progressBar');
+
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.innerHTML = 'RUNNING…';
+  pw.style.display = 'block';
+  pb.style.width = '5%';
+
+  setTimeout(() => {
+    const get = id => parseFloat(document.getElementById(id).value);
+    const params = {
+      primary: [get('primary_min'), get('primary_ml'), get('primary_max')],
+      fd:  [get('dip_min'), get('dip_ml'), get('dip_max')],
+      fa:  [get('fa_min'),  get('fa_ml'),  get('fa_max')],
+      wi:  [get('wi_min'),  get('wi_ml'),  get('wi_max')],
+      wa:  [get('wa_min'),  get('wa_ml'),  get('wa_max')],
+    };
+    const N = parseInt(document.getElementById('n_iter').value);
+    pb.style.width = '30%';
+
+    const results = [];
+    for (let i = 0; i < N; i++) {
+      const fd = sampleTriangular(...params.fd);
+      const fa = sampleTriangular(...params.fa);
+      const wi = sampleTriangular(...params.wi);
+      const wa = sampleTriangular(...params.wa);
+      const angle = calcAngle(fd, fa, wi, wa);
+      const v = calcResult(sampleTriangular(...params.primary), fd, fa, wi, wa);
+      if (isFinite(v) && v > 0 && v < 99999) results.push({ v, angle });
+    }
+    pb.style.width = '70%';
+    results.sort((a, b) => a.v - b.v);
+
+    const vals = results.map(r => r.v);
+
+    const percList = [5,10,15,25,35,45,50,55,65,75,85,90,95];
+    const percVals = {};
+    percList.forEach(p => { percVals[p] = percentile(vals, p); });
+    const mean = vals.reduce((s,v) => s+v, 0) / vals.length;
+    const std  = Math.sqrt(vals.reduce((s,v) => s+(v-mean)**2, 0) / vals.length);
+    pb.style.width = '90%';
+
+    const outVar = currentMode === 'md' ? 'TST' : 'MD';
+
+    // Percentile table
+    const tbody = document.getElementById('percBody');
+    tbody.innerHTML = '';
+    percList.forEach(p => {
+      const tr = document.createElement('tr');
+      if (p === 50) tr.classList.add('mean-row');
+      tr.innerHTML = `<td>${p}</td><td>${percVals[p].toFixed(1)}</td>`;
+      tbody.appendChild(tr);
+    });
+    const mtr = document.createElement('tr');
+    mtr.classList.add('mean-row');
+    mtr.innerHTML = `<td>MEAN</td><td>${mean.toFixed(1)}</td>`;
+    tbody.appendChild(mtr);
+
+    // Stats
+    document.getElementById('sc_p50').textContent   = percVals[50].toFixed(1) + ' m';
+    document.getElementById('sc_mean').textContent  = mean.toFixed(1) + ' m';
+    document.getElementById('sc_range').textContent = `${percVals[10].toFixed(1)} – ${percVals[90].toFixed(1)} m`;
+    document.getElementById('sc_std').textContent   = std.toFixed(2) + ' m';
+
+    // Dist bar
+    document.getElementById('db_p10').textContent = percentile(vals,10).toFixed(1);
+    document.getElementById('db_p25').textContent = percentile(vals,25).toFixed(1);
+    document.getElementById('db_p50').textContent = percVals[50].toFixed(1);
+    document.getElementById('db_p75').textContent = percentile(vals,75).toFixed(1);
+    document.getElementById('db_p90').textContent = percentile(vals,90).toFixed(1);
+    document.getElementById('distBar').style.display = 'grid';
+    document.getElementById('chartLegend').style.display = 'flex';
+
+    // Matrix
+    buildMatrix(get);
+
+    // CDF — store angle as the 'z' custom field on each point
+    const step = Math.floor(results.length / 300) || 1;
+    const cdfX = [], cdfY = [], cdfA = [];
+    for (let i = 0; i < results.length; i += step) {
+      cdfX.push(results[i].v);
+      cdfY.push(((i+1)/results.length)*100);
+      cdfA.push(results[i].angle);
+    }
+    cdfX.push(results[results.length-1].v); cdfY.push(100); cdfA.push(results[results.length-1].angle);
+    pb.style.width = '100%';
+
+    document.getElementById('emptyState').style.display = 'none';
+    if (chartInstance) chartInstance.destroy();
+
+    const meanVal   = mean;
+    const lineColor = currentMode === 'md' ? '#ff6b35' : '#00d4ff';
+    const ctx = document.getElementById('mdChart').getContext('2d');
+
+    chartInstance = new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'CDF',
+          data: cdfX.map((x,i) => ({x, y:cdfY[i], angle:cdfA[i]})),
+          showLine: true, borderColor: '#ff4444', borderWidth: 2.5,
+          pointRadius: 0, fill: false, tension: 0.3,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: {duration:0},
+        plugins: {
+          legend: {display:false},
+          tooltip: {
+            mode:'index', intersect:false,
+            backgroundColor:'#181c23', borderColor:'#252b37', borderWidth:1,
+            titleColor:'#8a95a8', bodyColor:'#e8edf5',
+            callbacks: {
+              label: c => {
+                const angle = c.raw.angle;
+                const angleTxt = (angle !== undefined) ? `  |  Apparent Dip: ${angle.toFixed(2)}°` : '';
+                return `${outVar}: ${c.parsed.x.toFixed(1)} m  |  CDF: ${c.parsed.y.toFixed(1)}%${angleTxt}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            type:'linear',
+            title:{display:true, text:`${outVar} (m)`, color:'#8a95a8', font:{family:'JetBrains Mono',size:11}},
+            grid:{color:'rgba(37,43,55,0.8)'}, ticks:{color:'#5a6475',font:{family:'JetBrains Mono',size:10}},
+          },
+          y: {
+            min:0, max:100,
+            title:{display:true, text:'Cumulative Frequency (%)', color:'#8a95a8', font:{family:'JetBrains Mono',size:11}},
+            grid:{color:'rgba(37,43,55,0.8)'}, ticks:{color:'#5a6475',font:{family:'JetBrains Mono',size:10}},
+          }
+        }
+      },
+      plugins: [{
+        id: 'vline',
+        afterDraw(chart) {
+          const {ctx, scales:{x:xs,y:ys}} = chart;
+          const px=xs.getPixelForValue(meanVal), yTop=ys.getPixelForValue(100), yBot=ys.getPixelForValue(0);
+          ctx.save();
+          ctx.beginPath(); ctx.moveTo(px,yTop); ctx.lineTo(px,yBot);
+          ctx.strokeStyle=lineColor; ctx.lineWidth=2; ctx.setLineDash([5,4]); ctx.stroke(); ctx.setLineDash([]);
+          ctx.font="bold 11px 'JetBrains Mono'";
+          const lbl=meanVal.toFixed(1), lw=ctx.measureText(lbl).width+10;
+          const lx=px+4, ly=yTop+10;
+          ctx.fillStyle=lineColor+'22'; ctx.fillRect(lx,ly,lw,18);
+          ctx.strokeStyle=lineColor; ctx.lineWidth=1; ctx.strokeRect(lx,ly,lw,18);
+          ctx.fillStyle=lineColor; ctx.fillText(lbl,lx+5,ly+13);
+          ctx.restore();
+        }
+      }]
+    });
+
+    setTimeout(() => {
+      pw.style.display='none'; pb.style.width='0%';
+      btn.disabled=false; spinner.style.display='none';
+      btnText.innerHTML='&#9654; CALCULATE';
+    }, 400);
+  }, 50);
+}
+
+window.addEventListener('load', () => setTimeout(runSimulation, 300));
+</script>
+</body>
+</html>

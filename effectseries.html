@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dip & Azimuth Sweep | Well Planning</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#0a0c0f; --surface:#111318; --surface2:#181c23; --surface3:#1e232d;
+  --border:#252b37; --border2:#2e3747;
+  --accent:#00d4ff; --accent2:#ff6b35;
+  --text:#e8edf5; --text2:#8a95a8; --text3:#5a6475;
+  --pink:#ff3d8a; --yellow:#ffd600; --green:#00e676; --red:#ff4444;
+  --mode-accent:#00d4ff; --mode-accent-glow:rgba(0,212,255,0.35);
+  --mode-accent-bg:rgba(0,212,255,0.1); --mode-accent-border:rgba(0,212,255,0.3);
+}
+body.mode-md {
+  --mode-accent:#ff6b35; --mode-accent-glow:rgba(255,107,53,0.4);
+  --mode-accent-bg:rgba(255,107,53,0.1); --mode-accent-border:rgba(255,107,53,0.3);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,212,255,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03)1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;}
+.app-wrapper{
+  position:relative;
+  z-index:1;
+  max-width:1900px;
+  margin:0 auto;
+  padding:0 24px 60px calc(24px + (var(--nb-col) * 1));
+}
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:20px 0 22px;
+  border-bottom:1px solid var(--border);margin-bottom:26px;flex-wrap:wrap;gap:12px;}
+.logo-group{display:flex;align-items:center;gap:14px;}
+.logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--mode-accent),#0066ff);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background 0.3s;}
+.mode-md .logo-icon{background:linear-gradient(135deg,var(--accent2),#cc3300);}
+.logo-icon svg{width:18px;height:18px;}
+.app-title{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;letter-spacing:-0.02em;}
+.app-title span{color:var(--mode-accent);transition:color 0.3s;}
+.header-meta{font-size:0.65rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;}
+.header-right{display:flex;align-items:center;gap:14px;}
+.badge{background:var(--mode-accent-bg);border:1px solid var(--mode-accent-border);color:var(--mode-accent);font-size: 0.65rem;
+  padding:4px 12px;border-radius:20px;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;transition:all 0.3s;}
+
+/* MODE TOGGLE */
+.mode-toggle-wrap{display:flex;align-items:center;gap:8px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:10px;padding:5px 6px;}
+.mode-opt{font-size:0.66rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;
+  padding:5px 13px;border-radius:7px;cursor:pointer;transition:background 0.2s,color 0.2s;
+  color:var(--text3);white-space:nowrap;user-select:none;}
+.mode-opt.active-tst{background:var(--accent);color:#000;box-shadow:0 2px 10px rgba(0,212,255,0.3);}
+.mode-opt.active-md{background:var(--accent2);color:#fff;box-shadow:0 2px 10px rgba(255,107,53,0.35);}
+.mode-sep{font-size:0.65rem;color:var(--text3);}
+
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.panel-header{display:flex;align-items:center;gap:9px;padding:12px 16px;
+  background:var(--surface2);border-bottom:1px solid var(--border);}
+.panel-dot{width:7px;height:7px;border-radius:50%;}
+.panel-title{font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;
+  letter-spacing:0.12em;text-transform:uppercase;color:var(--text2);}
+
+/* LAYOUT — bigger gap between left panel and chart */
+.top-section{display:grid;grid-template-columns:340px 1fr;gap:28px;align-items:start;margin-bottom:18px;}
+@media(max-width:1000px){.top-section{grid-template-columns:1fr;}}
+
+/* INPUTS */
+.input-body{padding:16px;}
+.input-group{margin-bottom:14px;}
+.input-group:last-child{margin-bottom:0;}
+.input-label{font-size:0.62rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px;}
+.input-row{display:flex;align-items:center;gap:8px;}
+.input-row label{font-size:0.68rem;color:var(--text2);white-space:nowrap;min-width:58px;}
+.num-input{background:var(--surface3);border:1px solid var(--border2);color:var(--text);
+  padding:6px 8px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;
+  text-align:center;width:80px;transition:border-color 0.2s;-moz-appearance:textfield;}
+.num-input::-webkit-outer-spin-button,.num-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.num-input:focus{outline:none;border-color:var(--mode-accent);box-shadow:0 0 0 2px var(--mode-accent-bg);}
+.input-unit{font-size:0.6rem;color:var(--text3);}
+.divider{height:1px;background:var(--border);margin:13px 0;}
+
+/* range row */
+.range-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.range-field{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.range-label{font-size:0.58rem;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;align-self:flex-start;}
+
+/* Primary value */
+.primary-row{display:flex;align-items:center;justify-content:flex-start;gap:8px;}
+.primary-row label{font-size:0.68rem;color:var(--text2);white-space:nowrap;}
+.primary-val-input{background:var(--surface3);border:1px solid var(--border2);color:var(--text);
+  padding:6px 8px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;
+  text-align:center;width:90px;-moz-appearance:textfield;}
+.primary-val-input::-webkit-outer-spin-button,.primary-val-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.primary-val-input:focus{outline:none;border-color:var(--mode-accent);}
+
+/* Auto-recalc indicator (replaces calculate button) */
+.recalc-row{display:flex;align-items:center;gap:7px;justify-content:center;
+  margin-top:14px;padding:7px 0;}
+.recalc-dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 7px var(--green);flex-shrink:0;transition:background 0.2s,box-shadow 0.2s;}
+.recalc-dot.busy{background:var(--yellow);box-shadow:0 0 7px var(--yellow);
+  animation:blink 0.5s ease-in-out infinite alternate;}
+@keyframes blink{from{opacity:0.3}to{opacity:1}}
+.recalc-label{font-size:0.58rem;color:var(--text3);letter-spacing:0.07em;text-transform:uppercase;}
+
+/* Intersection angle bar */
+.angle-result-bar{margin-top:12px;padding:9px 13px;background:var(--surface2);border-radius:7px;
+  border:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.angle-result-label{font-size:0.6rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;}
+.angle-result-value{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;color:var(--mode-accent);}
+
+/* CHART */
+.chart-body{padding:16px 16px 12px;}
+.chart-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.chart-axis-label{font-size:0.63rem;color:var(--text2);letter-spacing:0.07em;text-transform:uppercase;}
+.chart-wrap{position:relative;height:420px;}
+.chart-legend-scroll{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;max-height:60px;overflow-y:auto;}
+.chart-legend-scroll::-webkit-scrollbar{height:3px;}
+.chart-legend-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:0.6rem;color:var(--text2);white-space:nowrap;}
+.legend-line{width:18px;height:2.5px;border-radius:2px;}
+
+/* Separator + bigger gap between top section and case matrix */
+.case-section{margin-top:50px;padding-top:22px;border-top:1px solid var(--border2);}
+
+.section-title{font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:700;
+  letter-spacing:0.12em;text-transform:uppercase;color:var(--text2);margin-bottom:14px;}
+
+.case-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px;}
+@media(max-width:800px){.case-grid{grid-template-columns:1fr;}}
+.case-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.case-card-header{padding:9px 13px;background:var(--surface2);border-bottom:1px solid var(--border);
+  font-size:0.62rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;}
+.case-card-body{padding:12px 13px;display:flex;flex-direction:column;gap:7px;}
+.case-input-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.case-input-row label{font-size:0.66rem;color:var(--text2);flex:1;}
+.case-input-row .input-unit{min-width:14px;}
+.case-num{background:var(--surface3);border:1px solid var(--border2);color:var(--text);
+  padding:5px 7px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:0.76rem;
+  text-align:center;width:80px;-moz-appearance:textfield;}
+.case-num::-webkit-outer-spin-button,.case-num::-webkit-inner-spin-button{-webkit-appearance:none;}
+.case-num:focus{outline:none;border-color:var(--mode-accent);}
+
+/* RESULTS */
+.results-section{margin-top:18px;}
+.results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+@media(max-width:900px){.results-grid{grid-template-columns:1fr;}}
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.result-card-header{padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);}
+.result-card-title{font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;
+  letter-spacing:0.1em;text-transform:uppercase;color:var(--text2);}
+.result-card-sub{font-size:0.58rem;color:var(--text3);margin-top:2px;}
+.result-table{width:100%;border-collapse:collapse;}
+.result-table th{padding:6px 10px;text-align:center;background:var(--surface3);
+  color:var(--text3);font-size:0.58rem;letter-spacing:0.1em;text-transform:uppercase;
+  border-bottom:1px solid var(--border);}
+.result-table th:first-child{text-align:left;}
+.result-table td{padding:5px 10px;text-align:center;border-bottom:1px solid rgba(37,43,55,0.5);
+  font-size:0.72rem;color:var(--text2);}
+.result-table td:first-child{text-align:left;color:var(--text3);font-size:0.65rem;}
+.result-table tr:last-child td{border-bottom:none;}
+.result-table td.val-angle{color:var(--yellow);font-weight:600;}
+.result-table td.val-primary{color:var(--mode-accent);font-weight:700;transition:color 0.3s;}
+/* parallel geometry — real near-zero angle shown in red with warning */
+.result-table td.parallel-cell{color:var(--red)!important;font-size:0.62rem;font-style:italic;font-weight:600;}
+.result-table tr.base-case td{background:rgba(0,212,255,0.05);}
+.mode-md .result-table tr.base-case td{background:rgba(255,107,53,0.05);}
+
+/* hint */
+.hint-text{font-size:0.61rem;color:var(--text3);padding:7px 11px;background:var(--surface2);
+  border-radius:6px;border-left:2px solid var(--mode-accent);line-height:1.6;margin-top:11px;transition:border-color 0.3s;}
+
+.watermark{text-align:center;margin-top:30px;font-size:0.57rem;color:var(--text3);letter-spacing:0.08em;}
+.th-min{color:#ff6b35!important;} .th-ml{color:#ffd600!important;} .th-max{color:#ff3d8a!important;}
+</style>
+<style id="NAVBAR_CSS_PASTE_THIS">
+/* ── Navbar ───────────────────────────────────────────────────────────────── */
+:root { --nb-w: 224px; --nb-col: 46px; }
+
+.nb {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: var(--nb-col);
+  background: #0d1017;
+  border-right: 1px solid #1e2530;
+  display: flex; flex-direction: column;
+  z-index: 200;
+  overflow: hidden;
+  transition: width 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+
+.nb.open { width: var(--nb-w); }
+
+/* Toggle button (hamburger / X) */
+.nb-toggle {
+  display: flex; align-items: center; justify-content: center;
+  width: var(--nb-col); height: var(--nb-col); flex-shrink: 0;
+  cursor: pointer; border-bottom: 1px solid #1e2530;
+  background: transparent; border-left: none; border-top: none; border-right: none;
+  padding: 0; position: relative;
+}
+.nb-toggle-icon { width: 18px; height: 14px; position: relative; }
+.nb-toggle-icon span {
+  display: block; position: absolute; left: 0; right: 0; height: 1.5px;
+  background: #8a95a8; border-radius: 1px;
+  transition: transform 0.22s ease, opacity 0.18s ease, top 0.22s ease;
+}
+.nb-toggle-icon span:nth-child(1) { top: 0; }
+.nb-toggle-icon span:nth-child(2) { top: 6px; }
+.nb-toggle-icon span:nth-child(3) { top: 12px; }
+/* Open state → X */
+.nb.open .nb-toggle-icon span:nth-child(1) { top: 6px; transform: rotate(45deg); background: #00d4ff; }
+.nb.open .nb-toggle-icon span:nth-child(2) { opacity: 0; transform: translateX(-6px); }
+.nb.open .nb-toggle-icon span:nth-child(3) { top: 6px; transform: rotate(-45deg); background: #00d4ff; }
+
+/* Section label */
+.nb-section {
+  font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #3a4558; padding: 14px 14px 5px;
+  white-space: nowrap; overflow: hidden;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.16s;
+}
+.nb.open .nb-section { opacity: 1; }
+
+/* Nav items */
+.nb-items { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 4px 0; }
+.nb-items::-webkit-scrollbar { width: 3px; }
+.nb-items::-webkit-scrollbar-thumb { background: #1e2530; border-radius: 2px; }
+
+.nb-item {
+  display: flex; align-items: center; gap: 0;
+  padding: 0; height: 40px;
+  color: #5a6880; font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem; letter-spacing: 0.03em;
+  text-decoration: none; white-space: nowrap;
+  border-left: 2px solid transparent;
+  cursor: pointer; background: transparent; width: 100%;
+  transition: color 0.14s, background 0.14s, border-color 0.14s;
+  position: relative;
+}
+.nb-item:hover { color: #8a95a8; background: rgba(255,255,255,0.03); }
+.nb-item.active {
+  color: #00d4ff; border-left-color: #00d4ff;
+  background: rgba(0,212,255,0.07);
+}
+
+/* Icon slot — always 46px wide so it lines up with the collapsed bar */
+.nb-icon {
+  width: var(--nb-col); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.nb-icon svg { width: 15px; height: 15px; }
+
+.nb-label {
+  flex: 1; overflow: hidden; text-overflow: ellipsis;
+  padding-right: 12px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.16s;
+}
+.nb.open .nb-label { opacity: 1; pointer-events: auto; }
+
+/* Tooltip on hover (collapsed state only) */
+.nb-item::after {
+  content: attr(data-tip);
+  position: absolute; left: calc(var(--nb-col) + 8px); top: 50%;
+  transform: translateY(-50%);
+  background: #181c23; border: 1px solid #252b37;
+  color: #e8edf5; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace;
+  padding: 5px 10px; border-radius: 5px;
+  white-space: nowrap; pointer-events: none; z-index: 300;
+  display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.nb:not(.open) .nb-item:hover::after { display: block; }
+
+/* Divider */
+.nb-divider { height: 1px; background: #1a2030; margin: 5px 14px; }
+
+/* Footer */
+.nb-footer {
+  padding: 10px 14px; border-top: 1px solid #1e2530;
+  font-size: 0.52rem; color: #3a4558; font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap; overflow: hidden;
+  opacity: 0; transition: opacity 0.16s; flex-shrink: 0;
+}
+.nb.open .nb-footer { opacity: 1; }
+
+/* Smooth dark overlay behind main content */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 150;
+  pointer-events: none;
+  transition: background 0.25s ease;
+}
+
+body.nb-open::after {
+  background: rgba(0, 0, 0, 0.5);
+}
+</style>
+</head>
+<body id="appBody">
+<nav class="nb" id="nb">
+
+  <!-- Toggle button -->
+  <button class="nb-toggle" id="nb-toggle" aria-label="Toggle navigation">
+    <div class="nb-toggle-icon">
+      <span></span><span></span><span></span>
+    </div>
+  </button>
+
+  <div class="nb-section">Navigation</div>
+
+  <div class="nb-items">
+
+    <!-- Well Intersection Calculator -->
+    <a class="nb-item" id="nav-intersection" href="wellintersection.html"
+       data-tip="Well Intersection Calculator">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="2" x2="12" y2="22"/>
+          <path d="M8 6h8M9 10h6M10 14h4M11 18h2"/>
+        </svg>
+      </span>
+      <span class="nb-label">Well Intersection</span>
+    </a>
+
+    <!-- Dip & Azimuth Sweep -->
+    <a class="nb-item active" id="nav-sweep" href="effectseries.html"
+       data-tip="Dip & Azimuth Sweep">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </span>
+      <span class="nb-label">Dip &amp; Az Sweep</span>
+    </a>
+
+    <!-- Monte Carlo Calculator -->
+    <a class="nb-item" id="nav-montecarlo" href="tstmd.html"
+       data-tip="TST ↔ MD Monte Carlo">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/>
+          <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+      </span>
+      <span class="nb-label">TST ↔ MD Monte Carlo</span>
+    </a>
+
+    <div class="nb-divider"></div>
+
+    <!-- Guide -->
+    <a class="nb-item" id="nav-guide" href="guide.html"
+       data-tip="User Guide">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+      </span>
+      <span class="nb-label">Guide</span>
+    </a>
+
+    <!-- About -->
+    <a class="nb-item" id="nav-about" href="about.html"
+       data-tip="About">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      </span>
+      <span class="nb-label">About</span>
+    </a>
+
+  </div><!-- .nb-items -->
+
+  <div class="nb-footer">Well Planning Suite · v1.0</div>
+</nav>
+<div class="app-wrapper">
+
+<header>
+  <div class="logo-group">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="2" x2="12" y2="22"/><path d="M8 6h8M9 10h6M10 14h4M11 18h2"/>
+      </svg>
+    </div>
+    <div>
+      <div class="app-title" id="appTitle">Effect of Formation Dip &amp; Azimuth on <span id="titleVar">MD</span></div>
+      <div class="header-meta">Well Planning · Dip &amp; Azimuth Sweep</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="mode-toggle-wrap">
+      <div class="mode-opt active-tst" id="toggleTST" onclick="setMode('tst')">TST → MD</div>
+      <span class="mode-sep">/</span>
+      <div class="mode-opt" id="toggleMD" onclick="setMode('md')">MD → TST</div>
+    </div>
+    <div class="badge" id="badge">Given TST · Vary Dip &amp; Az</div>
+  </div>
+</header>
+
+<div class="top-section">
+
+  <!-- INPUTS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-dot" style="background:#ffd600"></div>
+      <span class="panel-title">Well &amp; Formation Parameters</span>
+    </div>
+    <div class="input-body">
+
+      <div class="input-label">Well Parameters</div>
+      <div class="input-group">
+        <div class="input-row" style="margin-bottom:7px;">
+          <label>Well Inclin.</label>
+          <input class="num-input" id="wi" type="number" value="78" step="0.1" min="0" max="90">
+          <span class="input-unit">degrees</span>
+        </div>
+        <div class="input-row">
+          <label>Well Azimuth</label>
+          <input class="num-input" id="wa" type="number" value="90" step="0.1" min="0" max="360">
+          <span class="input-unit">degrees</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="input-label" id="primaryLabel">TST (given)</div>
+      <div class="input-group">
+        <div class="primary-row">
+          <label id="primaryRowLabel">TST value</label>
+          <input class="primary-val-input num-input" id="primaryVal" type="number" value="6" step="0.1" min="0.01">
+          <span class="input-unit">m</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="input-label">Formation Dip Sweep Range</div>
+      <div class="input-group">
+        <div class="range-row">
+          <div class="range-field">
+            <div class="range-label th-min">Lowest dip</div>
+            <input class="num-input" id="dipLow" type="number" value="1" step="1" min="1" max="89">
+            <span class="input-unit" style="margin-top:2px;">degrees</span>
+          </div>
+          <div class="range-field">
+            <div class="range-label th-max">Highest dip</div>
+            <input class="num-input" id="dipHigh" type="number" value="46" step="1" min="1" max="89">
+            <span class="input-unit" style="margin-top:2px;">degrees</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="input-label">Formation Azimuth Sweep Range</div>
+      <div class="input-group">
+        <div class="range-row">
+          <div class="range-field">
+            <div class="range-label th-min">Lowest az.</div>
+            <input class="num-input" id="azLow" type="number" value="186" step="1" min="0" max="360">
+            <span class="input-unit" style="margin-top:2px;">degrees</span>
+          </div>
+          <div class="range-field">
+            <div class="range-label th-max">Highest az.</div>
+            <input class="num-input" id="azHigh" type="number" value="319" step="1" min="0" max="360">
+            <span class="input-unit" style="margin-top:2px;">degrees</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto-recalc status indicator -->
+      <div class="recalc-row">
+        <div class="recalc-dot" id="recalcDot"></div>
+        <span class="recalc-label" id="recalcLabel">Live · updates on change</span>
+      </div>
+
+      <!-- Base-case intersection angle -->
+      <div class="angle-result-bar">
+        <div>
+          <div class="angle-result-label">Intersection Angle</div>
+          <div style="font-size:0.57rem;color:var(--text3);margin-top:2px;">at midpoint dip &amp; azimuth</div>
+        </div>
+        <div class="angle-result-value" id="baseAngleDisplay">—</div>
+      </div>
+
+      <div class="hint-text">
+        Dip sweep in 1° increments · azimuth range divided into exactly 14 series.
+        <span style="color:var(--red)">Red cells</span> = well runs parallel to bedding (no valid crossing).
+      </div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-dot" style="background:#ff3d8a"></div>
+      <span class="panel-title" id="chartPanelTitle">MD vs Formation Dip — Azimuth Series</span>
+    </div>
+    <div class="chart-body">
+      <div class="chart-label-row">
+        <span class="chart-axis-label">Y axis: <span id="yAxisLabel">MD (m)</span></span>
+        <span class="chart-axis-label">X axis: Formation Dip (degrees)</span>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="sweepChart"></canvas>
+      </div>
+      <div class="chart-legend-scroll" id="sweepLegend"></div>
+    </div>
+  </div>
+
+</div><!-- end top-section -->
+
+<!-- SEPARATOR + BIGGER GAP before case matrix -->
+<div class="case-section">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-dot" style="background:#39ff14"></div>
+      <span class="panel-title">3-Case Intersection &amp; <span id="outputVarLabel">Length MD</span> Matrix</span>
+    </div>
+    <div class="input-body">
+      <div style="font-size:0.62rem;color:var(--text3);margin-bottom:14px;line-height:1.7;">
+        Define Min / Base / Max values for Formation Dip and Formation Azimuth.
+        The matrix below shows all 9 combinations using the well parameters above.
+      </div>
+
+      <div class="case-grid">
+        <div class="case-card">
+          <div class="case-card-header th-min">Minimum</div>
+          <div class="case-card-body">
+            <div class="case-input-row">
+              <label>Form. Dip</label>
+              <input class="case-num" id="c_dip_min" type="number" value="15" step="0.1">
+              <span class="input-unit">°</span>
+            </div>
+            <div class="case-input-row">
+              <label>Form. Azimuth</label>
+              <input class="case-num" id="c_az_min" type="number" value="70" step="0.1">
+              <span class="input-unit">°</span>
+            </div>
+          </div>
+        </div>
+        <div class="case-card">
+          <div class="case-card-header th-ml">Base (Most Likely)</div>
+          <div class="case-card-body">
+            <div class="case-input-row">
+              <label>Form. Dip</label>
+              <input class="case-num" id="c_dip_ml" type="number" value="12" step="0.1">
+              <span class="input-unit">°</span>
+            </div>
+            <div class="case-input-row">
+              <label>Form. Azimuth</label>
+              <input class="case-num" id="c_az_ml" type="number" value="90" step="0.1">
+              <span class="input-unit">°</span>
+            </div>
+          </div>
+        </div>
+        <div class="case-card">
+          <div class="case-card-header th-max">Maximum</div>
+          <div class="case-card-body">
+            <div class="case-input-row">
+              <label>Form. Dip</label>
+              <input class="case-num" id="c_dip_max" type="number" value="15" step="0.1">
+              <span class="input-unit">°</span>
+            </div>
+            <div class="case-input-row">
+              <label>Form. Azimuth</label>
+              <input class="case-num" id="c_az_max" type="number" value="110" step="0.1">
+              <span class="input-unit">°</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-section">
+        <div class="section-title">Results — All 9 Combinations</div>
+        <div class="results-grid" id="resultsGrid">
+          <div style="color:var(--text3);font-size:0.7rem;padding:14px;">Calculating…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="watermark">Well Planning Tool · Dip &amp; Azimuth Sweep · Effect on MD / TST</div>
+</div>
+<script id="NAVBAR_JS_PASTE_THIS">
+(function(){
+  const nb     = document.getElementById('nb');
+  const toggle = document.getElementById('nb-toggle');
+  let open = false;
+
+  toggle.addEventListener('click', () => {
+    open = !open;
+    nb.classList.toggle('open', open);
+    document.body.classList.toggle('nb-open', open);
+  });
+
+  // Mark active page — body must have id="page-XXX"
+  const pageMap = {
+    'page-intersection': 'nav-intersection',
+    'page-sweep':        'nav-sweep',
+    'page-montecarlo':   'nav-montecarlo',
+    'page-guide':        'nav-guide',
+    'page-about':        'nav-about',
+  };
+  const bodyId = document.body.id;
+  if(bodyId && pageMap[bodyId]){
+    const el = document.getElementById(pageMap[bodyId]);
+    if(el) el.classList.add('active');
+  }
+})();
+</script>
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let currentMode  = 'tst';
+let sweepChart   = null;
+let debounceTimer = null;
+
+// ─── MODE ────────────────────────────────────────────────────────────────────
+function setMode(mode) {
+  if (mode === currentMode) return;
+  currentMode = mode;
+  const isMD = mode === 'md';
+  document.getElementById('appBody').classList.toggle('mode-md', isMD);
+  document.getElementById('toggleTST').className = 'mode-opt' + (isMD ? '' : ' active-tst');
+  document.getElementById('toggleMD').className  = 'mode-opt' + (isMD ? ' active-md' : '');
+  document.getElementById('titleVar').textContent        = isMD ? 'TST' : 'MD';
+  document.getElementById('badge').textContent           = isMD ? 'Given MD · Vary Dip & Az' : 'Given TST · Vary Dip & Az';
+  document.getElementById('primaryLabel').textContent    = isMD ? 'MD (given)' : 'TST (given)';
+  document.getElementById('primaryRowLabel').textContent = isMD ? 'MD value' : 'TST value';
+  document.getElementById('chartPanelTitle').textContent = isMD ? 'TST vs Formation Dip — Azimuth Series' : 'MD vs Formation Dip — Azimuth Series';
+  document.getElementById('yAxisLabel').textContent      = isMD ? 'TST (m)' : 'MD (m)';
+  document.getElementById('outputVarLabel').textContent  = isMD ? 'Calculated TST' : 'Length MD';
+  document.getElementById('baseAngleDisplay').textContent = '—';
+  document.getElementById('baseAngleDisplay').style.color = '';
+  if (sweepChart) { sweepChart.destroy(); sweepChart = null; }
+  document.getElementById('sweepLegend').innerHTML = '';
+  scheduleRecalc();
+}
+
+// ─── MATH ────────────────────────────────────────────────────────────────────
+function toR(d) { return d * Math.PI / 180; }
+
+/**
+ * Intersection angle between the well axis and the bedding plane.
+ *
+ * Well unit vector (incl from vertical wi°, azimuth wa°):
+ *   w = [sin(wi)·cos(wa), sin(wi)·sin(wa), −cos(wi)]
+ *
+ * Formation normal (dip fd° from horizontal, dip-direction azimuth fa°):
+ *   n = [sin(fd)·cos(fa), sin(fd)·sin(fa), cos(fd)]
+ *
+ * Intersection angle α = arcsin(|w · n|)
+ * (dot with normal = sin of angle between well and plane)
+ */
+function calcAngle(fd, fa, wi, wa) {
+  const wx = Math.sin(toR(wi)) * Math.cos(toR(wa));
+  const wy = Math.sin(toR(wi)) * Math.sin(toR(wa));
+  const wz = -Math.cos(toR(wi));
+  const nx = Math.sin(toR(fd)) * Math.cos(toR(fa));
+  const ny = Math.sin(toR(fd)) * Math.sin(toR(fa));
+  const nz = Math.cos(toR(fd));
+  const dot = wx*nx + wy*ny + wz*nz;
+  return Math.abs(Math.asin(Math.max(-1, Math.min(1, dot)))) * 180 / Math.PI;
+}
+
+// Below this angle the well is essentially parallel to bedding — no useful MD/TST
+const PARALLEL_DEG = 0.05;
+
+function calcOutput(primary, fd, fa, wi, wa) {
+  const angle = calcAngle(fd, fa, wi, wa);
+  const parallel = angle < PARALLEL_DEG;
+  if (parallel) return { result: null, angle, parallel: true };
+  const result = currentMode === 'tst'
+    ? primary / Math.sin(toR(angle))
+    : primary * Math.sin(toR(angle));
+  return { result, angle, parallel: false };
+}
+
+// ─── SERIES COLOURS — 14 distinct, high-contrast colours ────────────────────
+const SERIES_COLORS = [
+  '#00d4ff','#ff6b35','#ffd600','#ff3d8a','#00e676',
+  '#b388ff','#40c4ff','#ff8a65','#69f0ae','#ea80fc',
+  '#f4ff81','#ff6e40','#18ffff','#ff4081'
+];
+function sCol(i) { return SERIES_COLORS[i % SERIES_COLORS.length]; }
+
+// ─── AUTO-RECALC ─────────────────────────────────────────────────────────────
+function scheduleRecalc() {
+  const dot = document.getElementById('recalcDot');
+  dot.classList.add('busy');
+  document.getElementById('recalcLabel').textContent = 'Recalculating…';
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    runSweep();
+    dot.classList.remove('busy');
+    document.getElementById('recalcLabel').textContent = 'Live · updates on change';
+  }, 300);
+}
+
+// ─── MAIN SWEEP ──────────────────────────────────────────────────────────────
+function runSweep() {
+  const wi  = parseFloat(document.getElementById('wi').value);
+  const wa  = parseFloat(document.getElementById('wa').value);
+  const pv  = parseFloat(document.getElementById('primaryVal').value);
+  const dipLow  = Math.round(parseFloat(document.getElementById('dipLow').value));
+  const dipHigh = Math.round(parseFloat(document.getElementById('dipHigh').value));
+  const azLow   = Math.round(parseFloat(document.getElementById('azLow').value));
+  const azHigh  = Math.round(parseFloat(document.getElementById('azHigh').value));
+
+  if ([wi,wa,pv,dipLow,dipHigh,azLow,azHigh].some(isNaN)) return;
+  if (dipLow >= dipHigh || azLow > azHigh) return;
+
+  // Exactly 14 azimuth series (or fewer if range < 14)
+  const azRange  = azHigh - azLow;
+  const count    = Math.min(14, azRange + 1);
+  const azSeries = [];
+  for (let i = 0; i < count; i++) {
+    azSeries.push(azLow + Math.round(azRange * i / Math.max(1, count - 1)));
+  }
+  // Deduplicate (shouldn't be needed but safety net)
+  const azUniq = [...new Set(azSeries)];
+
+  const dipAxis = [];
+  for (let d = dipLow; d <= dipHigh; d++) dipAxis.push(d);
+
+  const datasets = azUniq.map((az, idx) => ({
+    label: `Az ${az}°`,
+    data: dipAxis.map(dip => {
+      const { result } = calcOutput(pv, dip, az, wi, wa);
+      return result !== null ? +result.toFixed(3) : null;
+    }),
+    borderColor: sCol(idx),
+    borderWidth: 2,
+    pointRadius: 0,
+    fill: false,
+    tension: 0.3,
+    spanGaps: false
+  }));
+
+  // Midpoint intersection angle display
+  const midAngle = calcAngle((dipLow+dipHigh)/2, (azLow+azHigh)/2, wi, wa);
+  const angleEl  = document.getElementById('baseAngleDisplay');
+  if (midAngle < PARALLEL_DEG) {
+    angleEl.textContent = '~0° (parallel)';
+    angleEl.style.color = 'var(--red)';
+  } else {
+    angleEl.textContent = midAngle.toFixed(2) + '°';
+    angleEl.style.color = '';
+  }
+
+  // Draw / redraw chart
+  if (sweepChart) sweepChart.destroy();
+  const outLabel = currentMode === 'md' ? 'TST (m)' : 'MD (m)';
+  sweepChart = new Chart(document.getElementById('sweepChart').getContext('2d'), {
+    type: 'line',
+    data: { labels: dipAxis, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index', intersect: false,
+          backgroundColor: '#181c23', borderColor: '#252b37', borderWidth: 1,
+          titleColor: '#8a95a8', bodyColor: '#e8edf5',
+          callbacks: {
+            title: items => `Formation Dip: ${items[0].label}°`,
+            label: item => {
+              if (item.raw === null) return null;
+              const az = azUniq[item.datasetIndex];
+              const α  = calcAngle(parseFloat(item.label), az, wi, wa);
+              return `Az ${az}°  →  ${outLabel.split(' ')[0]}: ${item.raw}  |  α: ${α.toFixed(2)}°`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          title:{ display:true, text:'Formation Dip (°)', color:'#8a95a8', font:{family:'JetBrains Mono',size:11} },
+          grid:{ color:'rgba(37,43,55,0.8)' }, ticks:{ color:'#5a6475', font:{family:'JetBrains Mono',size:9} }
+        },
+        y: {
+          title:{ display:true, text:outLabel, color:'#8a95a8', font:{family:'JetBrains Mono',size:11} },
+          grid:{ color:'rgba(37,43,55,0.8)' }, ticks:{ color:'#5a6475', font:{family:'JetBrains Mono',size:9} }
+        }
+      }
+    }
+  });
+
+  // Legend
+  const leg = document.getElementById('sweepLegend');
+  leg.innerHTML = '';
+  azUniq.forEach((az, idx) => {
+    const el = document.createElement('div');
+    el.className = 'legend-item';
+    el.innerHTML = `<div class="legend-line" style="background:${sCol(idx)}"></div><span>${az}°</span>`;
+    leg.appendChild(el);
+  });
+
+  buildCaseMatrix(wi, wa, pv);
+}
+
+// ─── 3×3 CASE MATRIX ────────────────────────────────────────────────────────
+function buildCaseMatrix(wi, wa, pv) {
+  const dipCases = [
+    { label:'Dip Min',  cls:'th-min', val:parseFloat(document.getElementById('c_dip_min').value) },
+    { label:'Dip Base', cls:'th-ml',  val:parseFloat(document.getElementById('c_dip_ml').value) },
+    { label:'Dip Max',  cls:'th-max', val:parseFloat(document.getElementById('c_dip_max').value) },
+  ];
+  const azCases = [
+    { label:'Az Min',  cls:'th-min', val:parseFloat(document.getElementById('c_az_min').value) },
+    { label:'Az Base', cls:'th-ml',  val:parseFloat(document.getElementById('c_az_ml').value) },
+    { label:'Az Max',  cls:'th-max', val:parseFloat(document.getElementById('c_az_max').value) },
+  ];
+  const outVar = currentMode === 'md' ? 'TST' : 'MD';
+  const grid   = document.getElementById('resultsGrid');
+  grid.innerHTML = '';
+
+  azCases.forEach((azCase, azIdx) => {
+    const card = document.createElement('div');
+    card.className = 'result-card';
+
+    card.innerHTML = `
+      <div class="result-card-header">
+        <div class="result-card-title"><span class="${azCase.cls}">${azCase.label}</span> = ${azCase.val}°</div>
+        <div class="result-card-sub">Az: ${azCase.val}°  ·  WI: ${wi}°  ·  WA: ${wa}°</div>
+      </div>`;
+
+    const tbl = document.createElement('table');
+    tbl.className = 'result-table';
+    tbl.innerHTML = `<thead><tr>
+      <th>Formation Dip</th>
+      <th>Intersection α (°)</th>
+      <th>${outVar} (m)</th>
+    </tr></thead><tbody></tbody>`;
+
+    const tbody = tbl.querySelector('tbody');
+    dipCases.forEach((dipCase, dipIdx) => {
+      const angle = calcAngle(dipCase.val, azCase.val, wi, wa);
+      const { result, parallel } = calcOutput(pv, dipCase.val, azCase.val, wi, wa);
+      const isBase = azIdx === 1 && dipIdx === 1;
+
+      const tr = document.createElement('tr');
+      if (isBase) tr.classList.add('base-case');
+
+      if (parallel) {
+        // Show the real tiny angle with a clear parallel warning — never just N/A
+        tr.innerHTML = `
+          <td><span class="${dipCase.cls}">${dipCase.label}</span> = ${dipCase.val}°</td>
+          <td class="parallel-cell" title="Well is running parallel to bedding at this geometry">${angle.toFixed(4)}° ⚠</td>
+          <td class="parallel-cell">parallel</td>`;
+      } else {
+        tr.innerHTML = `
+          <td><span class="${dipCase.cls}">${dipCase.label}</span> = ${dipCase.val}°</td>
+          <td class="val-angle">${angle.toFixed(2)}°</td>
+          <td class="val-primary">${result.toFixed(2)}</td>`;
+      }
+      tbody.appendChild(tr);
+    });
+
+    card.appendChild(tbl);
+    grid.appendChild(card);
+  });
+}
+
+// ─── WIRE ALL INPUTS → auto-recalc ───────────────────────────────────────────
+// Sweep inputs: debounce full chart + matrix rebuild
+const SWEEP_IDS = ['wi','wa','primaryVal','dipLow','dipHigh','azLow','azHigh'];
+// Case matrix inputs: instantly rebuild matrix only (no chart redraw needed)
+const CASE_IDS  = ['c_dip_min','c_dip_ml','c_dip_max','c_az_min','c_az_ml','c_az_max'];
+
+function scheduleMatrixOnly() {
+  // Read current well params directly and rebuild matrix immediately
+  const wi = parseFloat(document.getElementById('wi').value);
+  const wa = parseFloat(document.getElementById('wa').value);
+  const pv = parseFloat(document.getElementById('primaryVal').value);
+  if (!isNaN(wi) && !isNaN(wa) && !isNaN(pv)) {
+    buildCaseMatrix(wi, wa, pv);
+  }
+}
+
+window.addEventListener('load', () => {
+  SWEEP_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', scheduleRecalc);
+  });
+  CASE_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', scheduleMatrixOnly);
+  });
+  setTimeout(runSweep, 150);
+});
+</script>
+</body>
+</html>

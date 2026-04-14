@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Well Intersection Calculator | Well Planning</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0c0f; --surface:#111318; --surface2:#181c23; --surface3:#1e232d;
+  --border:#252b37; --border2:#2e3747;
+  --accent:#00d4ff; --accent2:#ff6b35;
+  --text:#e8edf5; --text2:#8a95a8; --text3:#5a6475;
+  --pink:#ff3d8a; --yellow:#ffd600; --green:#00e676; --red:#ff4444;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,212,255,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03)1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.app-wrapper{
+  position:relative;
+  z-index:1;
+  max-width:1900px;
+  margin:0 auto;
+  padding:0 24px 60px calc(24px + (var(--nb-col) * 1));
+}
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 0 20px;
+  border-bottom:1px solid var(--border);margin-bottom:22px;flex-wrap:wrap;gap:10px;}
+.logo-group{display:flex;align-items:center;gap:12px;}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#00d4ff,#0055cc);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.logo-icon svg{width:17px;height:17px;}
+.app-title{font-family:'Syne',sans-serif;font-size:1.25rem;font-weight:800;letter-spacing:-0.02em;}
+.app-title span{color:var(--accent);}
+.header-meta{font-size:0.65rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;}
+.badge{background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--accent);font-size: 0.65rem;
+  padding:4px 12px;border-radius:20px;font-size:0.63rem;letter-spacing:0.08em;text-transform:uppercase;}
+
+/* MAIN LAYOUT */
+.main-layout{display:grid;grid-template-columns:420px 1fr;gap:18px;align-items:start;}
+@media(max-width:1100px){.main-layout{grid-template-columns:1fr;}}
+
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px;}
+.panel:last-child{margin-bottom:0;}
+.panel-header{display:flex;align-items:center;gap:8px;padding:11px 15px;
+  background:var(--surface2);border-bottom:1px solid var(--border);}
+.panel-dot{width:7px;height:7px;border-radius:50%;}
+.panel-title{font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;
+  letter-spacing:0.12em;text-transform:uppercase;color:var(--text2);}
+.panel-body{padding:14px 15px;}
+
+/* INPUT GRID */
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.input-field{display:flex;flex-direction:column;gap:3px;}
+.field-label{font-size:0.57rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;}
+.field-row{display:flex;align-items:center;gap:6px;}
+.num-input{background:var(--surface3);border:1px solid var(--border2);color:var(--text);
+  padding:5px 7px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;
+  text-align:center;width:100%;-moz-appearance:textfield;transition:border-color 0.18s;}
+.num-input::-webkit-outer-spin-button,.num-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.num-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(0,212,255,0.12);}
+.field-unit{font-size:0.57rem;color:var(--text3);white-space:nowrap;}
+
+/* CALCULATOR SECTION */
+.calc-section{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px;}
+.calc-half{display:flex;flex-direction:column;gap:6px;}
+.calc-label{font-size:0.58rem;color:var(--text3);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:2px;}
+.calc-input-row{display:flex;align-items:center;gap:6px;}
+.calc-input-row label{font-size:0.65rem;color:var(--text2);white-space:nowrap;min-width:36px;}
+.primary-input{background:rgba(255,214,0,0.1);border:1px solid rgba(255,214,0,0.4);color:var(--yellow);
+  padding:5px 7px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;
+  font-weight:700;text-align:center;width:90px;-moz-appearance:textfield;}
+.primary-input::-webkit-outer-spin-button,.primary-input::-webkit-inner-spin-button{-webkit-appearance:none;}
+.primary-input:focus{outline:none;border-color:var(--yellow);}
+
+/* RESULT ROWS */
+.result-row{display:flex;align-items:center;justify-content:space-between;gap:6px;
+  padding:4px 0;border-bottom:1px solid rgba(37,43,55,0.5);}
+.result-row:last-child{border-bottom:none;}
+.result-name{font-size:0.66rem;color:var(--text2);}
+.result-val{font-family:'JetBrains Mono',monospace;font-size:0.82rem;font-weight:700;
+  color:var(--accent);white-space:nowrap;}
+.result-val.green{color:var(--green);}
+.result-val.yellow{color:var(--yellow);}
+.result-val.orange{color:var(--accent2);}
+.result-val.pink{color:var(--pink);}
+.result-val.na{color:var(--text3);font-weight:400;font-style:italic;}
+
+/* CALCULATE BUTTON - removed, live updates now */
+
+/* CHARTS */
+.right-col{display:flex;flex-direction:column;gap:14px;}
+.canvas-wrap{position:relative;}
+canvas{display:block;}
+
+/* BAR CHART */
+.bar-chart-wrap{padding:14px 16px 10px;}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.bar-label{font-size:0.62rem;color:var(--text2);width:32px;text-align:right;flex-shrink:0;}
+.bar-track{flex:1;background:var(--surface3);border-radius:3px;height:18px;overflow:hidden;position:relative;}
+.bar-fill{height:100%;border-radius:3px;transition:width 0.5s ease;display:flex;align-items:center;padding-left:6px;}
+.bar-fill-val{font-size:0.62rem;font-family:'JetBrains Mono',monospace;font-weight:700;color:#000;white-space:nowrap;}
+.bar-fill-val.light{color:rgba(255,255,255,0.9);}
+.bar-axis{display:flex;justify-content:space-between;padding-left:40px;margin-top:4px;}
+.bar-axis span{font-size:0.55rem;color:var(--text3);}
+.bar-axis-label{font-size:0.58rem;color:var(--text3);text-align:center;margin-top:3px;padding-left:40px;}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:10px 0;}
+
+/* LEGEND */
+.legend-row{display:flex;align-items:center;gap:7px;font-size:0.62rem;color:var(--text2);margin-bottom:4px;}
+.legend-line{width:22px;height:2px;border-radius:1px;flex-shrink:0;}
+.legend-dashed{width:22px;height:0;border-top:2px dashed;flex-shrink:0;}
+.legend-block{display:flex;flex-direction:column;gap:3px;padding:10px 14px;
+  background:var(--surface2);border:1px solid var(--border);border-radius:7px;}
+
+.watermark{text-align:center;margin-top:24px;font-size:0.55rem;color:var(--text3);letter-spacing:0.08em;}
+</style>
+<style id="NAVBAR_CSS_PASTE_THIS">
+/* ── Navbar ───────────────────────────────────────────────────────────────── */
+:root { --nb-w: 224px; --nb-col: 46px; }
+
+.nb {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: var(--nb-col);
+  background: #0d1017;
+  border-right: 1px solid #1e2530;
+  display: flex; flex-direction: column;
+  z-index: 200;
+  overflow: hidden;
+  transition: width 0.22s cubic-bezier(0.4,0,0.2,1);
+}
+
+.nb.open { width: var(--nb-w); }
+
+/* Toggle button (hamburger / X) */
+.nb-toggle {
+  display: flex; align-items: center; justify-content: center;
+  width: var(--nb-col); height: var(--nb-col); flex-shrink: 0;
+  cursor: pointer; border-bottom: 1px solid #1e2530;
+  background: transparent; border-left: none; border-top: none; border-right: none;
+  padding: 0; position: relative;
+}
+.nb-toggle-icon { width: 18px; height: 14px; position: relative; }
+.nb-toggle-icon span {
+  display: block; position: absolute; left: 0; right: 0; height: 1.5px;
+  background: #8a95a8; border-radius: 1px;
+  transition: transform 0.22s ease, opacity 0.18s ease, top 0.22s ease;
+}
+.nb-toggle-icon span:nth-child(1) { top: 0; }
+.nb-toggle-icon span:nth-child(2) { top: 6px; }
+.nb-toggle-icon span:nth-child(3) { top: 12px; }
+/* Open state → X */
+.nb.open .nb-toggle-icon span:nth-child(1) { top: 6px; transform: rotate(45deg); background: #00d4ff; }
+.nb.open .nb-toggle-icon span:nth-child(2) { opacity: 0; transform: translateX(-6px); }
+.nb.open .nb-toggle-icon span:nth-child(3) { top: 6px; transform: rotate(-45deg); background: #00d4ff; }
+
+/* Section label */
+.nb-section {
+  font-size: 0.5rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #3a4558; padding: 14px 14px 5px;
+  white-space: nowrap; overflow: hidden;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.16s;
+}
+.nb.open .nb-section { opacity: 1; }
+
+/* Nav items */
+.nb-items { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 4px 0; }
+.nb-items::-webkit-scrollbar { width: 3px; }
+.nb-items::-webkit-scrollbar-thumb { background: #1e2530; border-radius: 2px; }
+
+.nb-item {
+  display: flex; align-items: center; gap: 0;
+  padding: 0; height: 40px;
+  color: #5a6880; font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem; letter-spacing: 0.03em;
+  text-decoration: none; white-space: nowrap;
+  border-left: 2px solid transparent;
+  cursor: pointer; background: transparent; width: 100%;
+  transition: color 0.14s, background 0.14s, border-color 0.14s;
+  position: relative;
+}
+.nb-item:hover { color: #8a95a8; background: rgba(255,255,255,0.03); }
+.nb-item.active {
+  color: #00d4ff; border-left-color: #00d4ff;
+  background: rgba(0,212,255,0.07);
+}
+
+/* Icon slot — always 46px wide so it lines up with the collapsed bar */
+.nb-icon {
+  width: var(--nb-col); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.nb-icon svg { width: 15px; height: 15px; }
+
+.nb-label {
+  flex: 1; overflow: hidden; text-overflow: ellipsis;
+  padding-right: 12px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.16s;
+}
+.nb.open .nb-label { opacity: 1; pointer-events: auto; }
+
+/* Tooltip on hover (collapsed state only) */
+.nb-item::after {
+  content: attr(data-tip);
+  position: absolute; left: calc(var(--nb-col) + 8px); top: 50%;
+  transform: translateY(-50%);
+  background: #181c23; border: 1px solid #252b37;
+  color: #e8edf5; font-size: 0.64rem; font-family: 'JetBrains Mono', monospace;
+  padding: 5px 10px; border-radius: 5px;
+  white-space: nowrap; pointer-events: none; z-index: 300;
+  display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+}
+.nb:not(.open) .nb-item:hover::after { display: block; }
+
+/* Divider */
+.nb-divider { height: 1px; background: #1a2030; margin: 5px 14px; }
+
+/* Footer */
+.nb-footer {
+  padding: 10px 14px; border-top: 1px solid #1e2530;
+  font-size: 0.52rem; color: #3a4558; font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap; overflow: hidden;
+  opacity: 0; transition: opacity 0.16s; flex-shrink: 0;
+}
+.nb.open .nb-footer { opacity: 1; }
+
+/* Smooth dark overlay behind main content */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 150;
+  pointer-events: none;
+  transition: background 0.25s ease;
+}
+
+body.nb-open::after {
+  background: rgba(0, 0, 0, 0.5);
+}
+</style>
+</head>
+<body>
+<nav class="nb" id="nb">
+
+  <!-- Toggle button -->
+  <button class="nb-toggle" id="nb-toggle" aria-label="Toggle navigation">
+    <div class="nb-toggle-icon">
+      <span></span><span></span><span></span>
+    </div>
+  </button>
+
+  <div class="nb-section">Navigation</div>
+
+  <div class="nb-items">
+
+    <!-- Well Intersection Calculator -->
+    <a class="nb-item active" id="nav-intersection" href="wellintersection.html"
+       data-tip="Well Intersection Calculator">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="2" x2="12" y2="22"/>
+          <path d="M8 6h8M9 10h6M10 14h4M11 18h2"/>
+        </svg>
+      </span>
+      <span class="nb-label">Well Intersection</span>
+    </a>
+
+    <!-- Dip & Azimuth Sweep -->
+    <a class="nb-item" id="nav-sweep" href="effectseries.html"
+       data-tip="Dip & Azimuth Sweep">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </span>
+      <span class="nb-label">Dip &amp; Az Sweep</span>
+    </a>
+
+    <!-- Monte Carlo Calculator -->
+    <a class="nb-item" id="nav-montecarlo" href="tstmd.html"
+       data-tip="TST ↔ MD Monte Carlo">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <line x1="8" y1="21" x2="16" y2="21"/>
+          <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+      </span>
+      <span class="nb-label">TST ↔ MD Monte Carlo</span>
+    </a>
+
+    <div class="nb-divider"></div>
+
+    <!-- Guide -->
+    <a class="nb-item" id="nav-guide" href="guide.html"
+       data-tip="User Guide">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+      </span>
+      <span class="nb-label">Guide</span>
+    </a>
+
+    <!-- About -->
+    <a class="nb-item" id="nav-about" href="about.html"
+       data-tip="About">
+      <span class="nb-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="16" x2="12" y2="12"/>
+          <line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+      </span>
+      <span class="nb-label">About</span>
+    </a>
+
+  </div><!-- .nb-items -->
+
+  <div class="nb-footer">Well Planning Suite · v1.0</div>
+</nav>
+<div class="app-wrapper">
+
+<header>
+  <div class="logo-group">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="2" x2="12" y2="22"/><path d="M8 6h8M9 10h6M10 14h4M11 18h2"/>
+      </svg>
+    </div>
+    <div>
+      <div class="app-title">Well <span>Intersection</span> Calculator</div>
+      <div class="header-meta">MD · TVD · TVT · VT · TST Converter</div>
+    </div>
+  </div>
+  <div class="badge">Deterministic · Single Values</div>
+</header>
+
+<div class="main-layout">
+
+<!-- ═══ LEFT COLUMN ═══ -->
+<div>
+
+  <!-- WELL & FORMATION PARAMETERS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-dot" style="background:#ffd600"></div>
+      <span class="panel-title">Well &amp; Formation Parameters</span>
+    </div>
+    <div class="panel-body">
+      <div class="input-grid">
+        <div class="input-field">
+          <div class="field-label">Formation Dip (0–90)</div>
+          <div class="field-row">
+            <input class="num-input" id="fd" type="number" value="15" min="0" max="90" step="0.1">
+            <span class="field-unit">°</span>
+          </div>
+        </div>
+        <div class="input-field">
+          <div class="field-label">Formation Azimuth (0–360)</div>
+          <div class="field-row">
+            <input class="num-input" id="fa" type="number" value="253" min="0" max="360" step="0.1">
+            <span class="field-unit">°</span>
+          </div>
+        </div>
+        <div class="input-field">
+          <div class="field-label">Well Inclination (0–90)</div>
+          <div class="field-row">
+            <input class="num-input" id="wi" type="number" value="25" min="0" max="90" step="0.1">
+            <span class="field-unit">°</span>
+          </div>
+        </div>
+        <div class="input-field">
+          <div class="field-label">Well Azimuth (0–360)</div>
+          <div class="field-row">
+            <input class="num-input" id="wa" type="number" value="45" min="0" max="360" step="0.1">
+            <span class="field-unit">°</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Depth inputs -->
+      <div style="font-size:0.57rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;">Reservoir Depths (TVD — enter positive)</div>
+      <div class="input-grid">
+        <div class="input-field">
+          <div class="field-label">Top Reservoir (TVD)</div>
+          <div class="field-row">
+            <input class="num-input" id="topRes" type="number" value="2543" min="0" step="1">
+            <span class="field-unit">m</span>
+          </div>
+        </div>
+        <div class="input-field">
+          <div class="field-label">GOC depth (TVD)</div>
+          <div class="field-row">
+            <input class="num-input" id="goc" type="number" value="2700" min="0" step="1">
+            <span class="field-unit">m</span>
+          </div>
+        </div>
+        <div class="input-field">
+          <div class="field-label">OWC depth (TVD)</div>
+          <div class="field-row">
+            <input class="num-input" id="owc" type="number" value="2900" min="0" step="1">
+            <span class="field-unit">m</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MD CALCULATOR -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-dot" style="background:#00d4ff"></div>
+      <span class="panel-title">MD Calculator <span style="font-size:0.65rem;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">— input TST → output MD &amp; all derived</span></span>
+    </div>
+    <div class="panel-body">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="font-size:0.62rem;color:var(--text2);">TST (m)</div>
+        <input class="primary-input" id="tstInput" type="number" value="1000" step="0.1" min="0.01">
+      </div>
+      <div id="mdResults"></div>
+    </div>
+  </div>
+
+  <!-- TST CALCULATOR -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-dot" style="background:#ff6b35"></div>
+      <span class="panel-title">TST Calculator <span style="font-size:0.65rem;color:var(--text3);font-weight:400;text-transform:none;letter-spacing:0">— input MD → output TST</span></span>
+    </div>
+    <div class="panel-body">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="font-size:0.62rem;color:var(--text2);">MD (m)</div>
+        <input class="primary-input" style="background:rgba(255,107,53,0.1);border-color:rgba(255,107,53,0.4);color:var(--accent2);"
+          id="mdInput" type="number" value="10.0" step="0.1" min="0.01">
+      </div>
+      <div id="tstResults"></div>
+    </div>
+  </div>
+
+  <!-- BAR CHARTS -->
+  <div class="panel" style="margin-top:14px;">
+    <div class="panel-header">
+      <div class="panel-dot" style="background:#39ff14"></div>
+      <span class="panel-title">MD · VT · TVT · TST Comparison</span>
+    </div>
+    <div class="bar-chart-wrap" id="barChart1"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-dot" style="background:#ff3d8a"></div>
+      <span class="panel-title">MD vs TST</span>
+    </div>
+    <div class="bar-chart-wrap" id="barChart2"></div>
+  </div>
+
+</div><!-- end left col -->
+
+<!-- ═══ RIGHT COLUMN ═══ -->
+<div class="right-col">
+
+  <!-- TRAJECTORY PLOT -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-dot" style="background:#00d4ff"></div>
+      <span class="panel-title">Well Trajectory &amp; Formation</span>
+      <button onclick="calculate()" title="Force redraw" style="margin-left:auto;display:flex;align-items:center;gap:5px;
+        background:var(--surface3);border:1px solid var(--border2);color:var(--text2);padding:4px 10px;
+        border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:0.6rem;letter-spacing:0.07em;
+        text-transform:uppercase;cursor:pointer;transition:color 0.14s,background 0.14s;"
+        onmouseover="this.style.color='var(--text)';this.style.background='var(--border2)'"
+        onmouseout="this.style.color='var(--text2)';this.style.background='var(--surface3)'">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
+    <div style="display:flex;gap:12px;padding:14px;position:relative;">
+      <div style="flex:1;min-width:0;position:relative;">
+        <canvas id="trajectoryCanvas" style="display:block;width:100%;border-radius:6px;image-rendering:crisp-edges;"></canvas>
+        <div id="trajTooltip" style="display:none;position:absolute;background:#181c23;border:1px solid #252b37;
+          border-radius:6px;padding:7px 11px;font-size:0.65rem;color:#e8edf5;pointer-events:none;
+          white-space:nowrap;z-index:10;"></div>
+      </div>
+      <div class="legend-block" style="flex-shrink:0;align-self:flex-start;min-width:155px;">
+        <div class="legend-row"><div class="legend-line" style="background:#ff4444;height:3px;"></div><span>Apparent Wellbore</span></div>
+        <div class="legend-row"><div style="width:22px;height:0;border-top:2px solid #aaaaaa;flex-shrink:0;"></div><span>Top Reservoir</span></div>
+        <div class="legend-row"><div style="width:22px;height:0;border-top:2px dashed #555555;flex-shrink:0;"></div><span>Base Reservoir</span></div>
+        <div class="legend-row"><div style="width:22px;height:0;border-top:2px dashed #ff3d8a;flex-shrink:0;"></div><span style="color:#ff3d8a">GOC</span></div>
+        <div class="legend-row"><div style="width:22px;height:0;border-top:2px dashed #00d4ff;flex-shrink:0;"></div><span style="color:#00d4ff">OWC</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROSE DIAGRAM -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-dot" style="background:#ffd600"></div>
+      <span class="panel-title">Formation &amp; Wellbore Orientation</span>
+    </div>
+    <div style="display:flex;gap:12px;padding:14px;align-items:flex-start;">
+      <div style="flex-shrink:0;width:320px;height:320px;position:relative;">
+        <canvas id="roseCanvas" style="display:block;width:100%;height:100%;"></canvas>
+      </div>
+      <div class="legend-block" style="align-self:flex-start;min-width:160px;">
+        <div class="legend-row"><div style="width:22px;height:0;border-top:2px dashed #cc44cc;flex-shrink:0;"></div><span style="color:#cc44cc;">Formation Dip</span></div>
+        <div class="legend-row"><div style="width:22px;height:2px;background:#cc2222;flex-shrink:0;"></div><span style="color:#cc2222;">Formation Azimuth</span></div>
+        <div class="legend-row"><div style="width:22px;height:2px;background:#aaaaaa;flex-shrink:0;"></div><span>Wellbore</span></div>
+        <div style="margin-top:10px;font-size:0.58rem;color:var(--text3);line-height:1.7;">
+          <b style="color:var(--text2)">Formation Azimuth (red):</b><br>
+          Full diameter at any FD.<br>Direction = FA angle.<br><br>
+          <b style="color:var(--text2)">Formation Dip (violet dashed):</b><br>
+          FD=0 → radius length.<br>FD=90 → point (vertical).<br><br>
+          <b style="color:var(--text2)">Wellbore (grey):</b><br>
+          WI=0 → full radius.<br>WI=90 → point (horizontal).
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end right col -->
+</div><!-- end main layout -->
+
+<div class="watermark">Well Planning Tool · Intersection Calculator · MD · TVD · TVT · VT · TST</div>
+</div>
+<script id="NAVBAR_JS_PASTE_THIS">
+(function(){
+  const nb     = document.getElementById('nb');
+  const toggle = document.getElementById('nb-toggle');
+  let open = false;
+
+  toggle.addEventListener('click', () => {
+    open = !open;
+    nb.classList.toggle('open', open);
+    document.body.classList.toggle('nb-open', open);
+  });
+
+  // Mark active page — body must have id="page-XXX"
+  const pageMap = {
+    'page-intersection': 'nav-intersection',
+    'page-sweep':        'nav-sweep',
+    'page-montecarlo':   'nav-montecarlo',
+    'page-guide':        'nav-guide',
+    'page-about':        'nav-about',
+  };
+  const bodyId = document.body.id;
+  if(bodyId && pageMap[bodyId]){
+    const el = document.getElementById(pageMap[bodyId]);
+    if(el) el.classList.add('active');
+  }
+})();
+</script>
+<script>
+// ─── MATH ────────────────────────────────────────────────────────────────────
+function toR(d){ return d * Math.PI / 180; }
+
+function calcAngle(fd, fa, wi, wa){
+  const dot =
+    Math.cos(toR(90-fd)) * Math.cos(toR(fa+180)) * Math.cos(toR(90-wi)) * Math.cos(toR(wa)) +
+    Math.cos(toR(90-fd)) * Math.sin(toR(fa+180)) * Math.cos(toR(90-wi)) * Math.sin(toR(wa)) +
+    Math.sin(toR(90-fd)) * Math.sin(toR(90-wi));
+  return Math.abs(90 - Math.acos(Math.max(-1,Math.min(1,dot))) * 180 / Math.PI);
+}
+
+function fmt(v, dec=1){ return (v===null||isNaN(v)||!isFinite(v)) ? 'N/A' : v.toFixed(dec); }
+function fmtPct(v){ return (v===null||isNaN(v)) ? 'N/A' : (v*100).toFixed(0)+'%'; }
+
+// ─── INPUT CLAMPING ──────────────────────────────────────────────────────────
+function clamp(val, min, max){ return Math.max(min, Math.min(max, val)); }
+
+const INPUT_LIMITS = {
+  fd:  [0,  90],
+  fa:  [0, 360],
+  wi:  [0,  90],
+  wa:  [0, 360],
+};
+
+function readClamped(id){
+  const el = document.getElementById(id);
+  let v = parseFloat(el.value);
+  if (isNaN(v)) return parseFloat(el.defaultValue || 0);
+  const lims = INPUT_LIMITS[id];
+  if (lims) {
+    v = clamp(v, lims[0], lims[1]);
+    if (parseFloat(el.value) !== v) el.value = v;
+  }
+  return v;
+}
+
+// ─── CALCULATE (called live on every input change) ───────────────────────────
+let _calcTimer = null;
+function scheduleCalc(){
+  clearTimeout(_calcTimer);
+  _calcTimer = setTimeout(calculate, 40);
+}
+
+function calculate(){
+  const fd     = readClamped('fd');
+  const fa     = readClamped('fa');
+  const wi     = readClamped('wi');
+  const wa     = readClamped('wa');
+  const tstIn  = Math.abs(parseFloat(document.getElementById('tstInput').value)) || 0;
+  const mdIn   = Math.abs(parseFloat(document.getElementById('mdInput').value))  || 0;
+  const topRes = Math.abs(parseFloat(document.getElementById('topRes').value))   || 0;
+  const goc    = Math.abs(parseFloat(document.getElementById('goc').value))      || 0;
+  const owc    = Math.abs(parseFloat(document.getElementById('owc').value))      || 0;
+
+  const alpha  = calcAngle(fd, fa, wi, wa);
+  const sinA   = Math.sin(toR(alpha));
+  const cosWI  = Math.cos(toR(wi));
+  const cosFD  = Math.cos(toR(fd));
+
+  // ── MD Calculator (from TST) ──
+  const MD_from_TST = (sinA > 0.0001) ? tstIn / sinA : null;
+  let VT_md=null, TVT_md=null, tst_vs_md=null, tst_vs_tvt=null, baseResDepth=null, strike=null;
+  if (MD_from_TST !== null){
+    VT_md        = MD_from_TST * cosWI;
+    TVT_md       = (cosFD > 0.0001) ? tstIn / cosFD : null;
+    tst_vs_md    = sinA;
+    tst_vs_tvt   = cosFD;
+    baseResDepth = topRes + VT_md;
+    strike       = ((fa - 90) % 360 + 360) % 360;
+  }
+
+  // ── TST Calculator (from MD) ──
+  const TST_from_MD = sinA > 0.0001 ? mdIn * sinA : null;
+
+  // ── Render MD results ──
+  const mdR = document.getElementById('mdResults');
+  const mdRows = [
+    ['MD (m)',                           fmt(MD_from_TST,1),     'green'],
+    ['Intersection Angle α',             fmt(alpha,2)+'°',       'yellow'],
+    ['VT — Vert. thickness in well (m)', fmt(VT_md,2),           'orange'],
+    ['TVT — True vertical thickness (m)',fmt(TVT_md,2),          'pink'],
+    ['TST vs MD (= sin α)',              fmtPct(tst_vs_md),      'accent'],
+    ['TST vs TVT (= cos FD)',            fmtPct(tst_vs_tvt),     'accent'],
+    ['Base Reservoir Depth (TVD)',       fmt(baseResDepth,1)+' m','green'],
+    ['Formation Strike (FA − 90)',       fmt(strike,1)+'°',      'yellow'],
+  ];
+  mdR.innerHTML = mdRows.map(([n,v,c])=>
+    `<div class="result-row"><span class="result-name">${n}</span><span class="result-val ${c}">${v}</span></div>`
+  ).join('');
+
+  // ── Render TST results ──
+  document.getElementById('tstResults').innerHTML =
+    `<div class="result-row"><span class="result-name">TST (m)</span><span class="result-val orange">${fmt(TST_from_MD,3)}</span></div>`;
+
+  // ── Bar Charts ──
+  renderBars(document.getElementById('barChart1'), [
+    { label:'MD',  value:MD_from_TST, color:'#00e676' },
+    { label:'VT',  value:VT_md,       color:'#ff4444' },
+    { label:'TVT', value:TVT_md,      color:'#ff3d8a' },
+    { label:'TST', value:tstIn,       color:'#ffd600' },
+  ].filter(r => r.value !== null && isFinite(r.value)));
+
+  renderBars(document.getElementById('barChart2'), [
+    { label:'MD',  value:MD_from_TST, color:'#ff4444' },
+    { label:'TST', value:tstIn,       color:'#ff3d8a' },
+  ].filter(r => r.value !== null && isFinite(r.value)));
+
+  // ── Plots ──
+  drawTrajectory(fd, fa, wi, wa, topRes, goc, owc, VT_md, MD_from_TST);
+  drawRose(fd, fa, wi, wa);
+}
+
+// ─── BAR CHART ───────────────────────────────────────────────────────────────
+function renderBars(el, vals){
+  if(!vals.length){ el.innerHTML='<div style="color:var(--text3);font-size:0.7rem;padding:8px;">No data</div>'; return; }
+  const maxV = Math.max(...vals.map(r=>r.value));
+  const range = maxV || 1;
+  const tickStep = Math.ceil(range / 5 / 10) * 10 || 1;
+  const axMax = Math.ceil(maxV / tickStep) * tickStep || tickStep;
+  let html = vals.map(r => {
+    const pct = (r.value / axMax * 100).toFixed(1);
+    const light = isLight(r.color);
+    return `<div class="bar-row">
+      <div class="bar-label">${r.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct}%;background:${r.color};">
+          <span class="bar-fill-val${light?' light':''}">${r.value.toFixed(1)}</span>
+        </div>
+      </div></div>`;
+  }).join('');
+  const ticks = [];
+  for(let t=0;t<=axMax;t+=tickStep) ticks.push(t);
+  html += `<div class="bar-axis">${ticks.map(t=>`<span>${t}</span>`).join('')}</div>`;
+  html += `<div class="bar-axis-label">metres</div>`;
+  el.innerHTML = html;
+}
+
+function isLight(hex){
+  const c = hex.replace('#','');
+  const r=parseInt(c.slice(0,2),16), g=parseInt(c.slice(2,4),16), b=parseInt(c.slice(4,6),16);
+  return (0.299*r+0.587*g+0.114*b) > 128;
+}
+
+// ─── CANVAS SIZING (pixel-ratio aware, no stretching) ────────────────────────
+function setupCanvas(canvas, heightPx){
+  const dpr = window.devicePixelRatio || 1;
+  const dispW = canvas.parentElement.clientWidth;
+  const dispH = heightPx;
+  canvas.style.width  = dispW + 'px';
+  canvas.style.height = dispH + 'px';
+  canvas.width  = Math.round(dispW * dpr);
+  canvas.height = Math.round(dispH * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, W: dispW, H: dispH };
+}
+
+// ─── TRAJECTORY ───────────────────────────────────────────────────────────────
+// Store last draw state for tooltip
+let _traj = null;
+
+function drawTrajectory(fd, fa, wi, wa, topRes, goc, owc, vt, md){
+  const canvas = document.getElementById('trajectoryCanvas');
+  if (!canvas.parentElement || !canvas.parentElement.clientWidth) return;
+  const { ctx, W, H } = setupCanvas(canvas, 460);
+
+  const ML=64, MR=20, MT=20, MB=28;
+  const PW = W - ML - MR, PH = H - MT - MB;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0c1016';
+  ctx.fillRect(0, 0, W, H);
+
+  const hasData = vt !== null && isFinite(vt) && vt > 0 && md !== null && isFinite(md) && md > 0;
+
+  // ── Apparent dip projected into the cross-section (wellbore azimuth plane) ──
+  const dipInPlane = hasData
+    ? Math.atan(Math.tan(toR(fd)) * Math.abs(Math.cos(toR(fa - wa)))) * 180 / Math.PI
+    : fd;
+  const tanDip = Math.tan(toR(dipInPlane));
+
+  // ── Well geometry ──
+  // Entry = where well TVD equals topRes (linear well from surface)
+  // If WI=0 the well is vertical: entryH=0, entryD=topRes
+  let entryH = 0, entryD = topRes;
+  let exitH  = 0, exitD  = topRes + (hasData ? vt : 0);
+  if(hasData && wi > 0.01){
+    // Well: TVD = h / tan(WI)  →  h = TVD * tan(WI)
+    entryH = topRes * Math.tan(toR(wi));
+    exitD  = topRes + vt;   // approx: formation base TVD at same horiz offset as entry
+    exitH  = exitD  * Math.tan(toR(wi));
+  }
+
+  // ── VIEWPORT: focus on the reservoir zone ──
+  // Centre the view on the entry/exit area, with comfortable padding
+  const resHeight = hasData ? vt : 300;
+  const resCentreD = topRes + resHeight / 2;
+  const resCentreH = hasData ? (entryH + exitH) / 2 : 0;
+
+  // Depth: show topRes - padding to owc + padding
+  const depthPad  = Math.max(resHeight * 1.5, 300);
+  const horizPad  = Math.max(Math.abs(exitH - entryH) * 2, resHeight * 2, 500);
+
+  const depthMin = Math.max(0, resCentreD - depthPad);
+  const depthMax = Math.max(
+    Math.max(goc, owc) + depthPad * 0.4,
+    resCentreD + depthPad,
+    topRes + resHeight * 3
+  );
+  const hMin = Math.max(0, resCentreH - horizPad);
+  const hMax = resCentreH + horizPad;
+
+  const mX = h => ML + (h - hMin) / (hMax - hMin) * PW;
+  const mY = d => MT + (d - depthMin) / (depthMax - depthMin) * PH;
+
+  // Save for hover
+  _traj = { mX, mY, ML, MR, MT, MB, W, H, PW, PH,
+            fd, fa, wi, wa, topRes, goc, owc, vt, md,
+            depthMax, depthMin, hMin, hMax, dipInPlane };
+
+  // ── Grid ──
+  ctx.strokeStyle = 'rgba(28,38,52,0.9)';
+  ctx.lineWidth = 1; ctx.setLineDash([]);
+  for(let i=0;i<=12;i++){
+    const x = ML + i*(PW/12);
+    ctx.beginPath(); ctx.moveTo(x,MT); ctx.lineTo(x,MT+PH); ctx.stroke();
+  }
+  for(let i=0;i<=8;i++){
+    const y = MT + i*(PH/8);
+    ctx.beginPath(); ctx.moveTo(ML,y); ctx.lineTo(ML+PW,y); ctx.stroke();
+  }
+
+  // ── Helper: draw a line that extends across the full plot box ──
+  // Given a point (h0,d0) on the line and slope tanDip_
+  const drawInfiniteLine = (h0, d0, tanDip_, color, dash, lw) => {
+    ctx.save();
+    ctx.strokeStyle = color; ctx.lineWidth = lw || 2;
+    ctx.setLineDash(dash || []);
+    // parametric: d = d0 + (h - h0) * tanDip_
+    // clip to hMin..hMax
+    const dAtHMin = d0 + (hMin - h0) * tanDip_;
+    const dAtHMax = d0 + (hMax - h0) * tanDip_;
+    ctx.beginPath();
+    ctx.moveTo(mX(hMin), mY(dAtHMin));
+    ctx.lineTo(mX(hMax), mY(dAtHMax));
+    ctx.stroke(); ctx.restore();
+  };
+
+  // ── Formation lines ──
+  if(hasData){
+    // Top reservoir passes through (entryH, topRes) with slope tanDip
+    drawInfiniteLine(entryH, topRes,         tanDip, '#aaaaaa', [],    2);
+    // Base reservoir passes through (exitH, topRes+vt) with same slope
+    drawInfiniteLine(exitH,  topRes + vt,    tanDip, '#555555', [8,5], 1.5);
+  } else {
+    // Just draw horizontal lines at topRes with the projected dip
+    drawInfiniteLine(0, topRes, tanDip, '#aaaaaa', [], 1.5);
+  }
+
+  // ── GOC ──
+  ctx.save(); ctx.strokeStyle='#ff3d8a'; ctx.lineWidth=1.5; ctx.setLineDash([8,5]);
+  ctx.beginPath(); ctx.moveTo(ML, mY(goc)); ctx.lineTo(ML+PW, mY(goc)); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle='#ff3d8a'; ctx.font="bold 10px 'JetBrains Mono'"; ctx.textAlign='right'; ctx.textBaseline='alphabetic';
+  ctx.fillText('GOC', ML+PW-4, mY(goc)-5);
+
+  // ── OWC ──
+  ctx.save(); ctx.strokeStyle='#00d4ff'; ctx.lineWidth=1.5; ctx.setLineDash([8,5]);
+  ctx.beginPath(); ctx.moveTo(ML, mY(owc)); ctx.lineTo(ML+PW, mY(owc)); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle='#00d4ff'; ctx.font="bold 10px 'JetBrains Mono'"; ctx.textAlign='right'; ctx.textBaseline='alphabetic';
+  ctx.fillText('OWC', ML+PW-4, mY(owc)-5);
+
+  // ── Well trajectory ──
+  if(hasData){
+    // Well: from surface (h=0,d=0), extends until depth = depthMax
+    const wellH_at_depthMax = (wi > 0.01) ? depthMax * Math.tan(toR(wi)) : 0;
+    ctx.save(); ctx.strokeStyle='#ff4444'; ctx.lineWidth=3; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(mX(0), mY(0)); ctx.lineTo(mX(wellH_at_depthMax), mY(depthMax)); ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Depth axis ──
+  ctx.setLineDash([]);
+  const depthStep = niceTick((depthMax - depthMin) / 7);
+  for(let d = Math.ceil(depthMin/depthStep)*depthStep; d <= depthMax; d += depthStep){
+    const y = mY(d);
+    if(y < MT-4 || y > MT+PH+4) continue;
+    ctx.fillStyle='#5a6475'; ctx.font="10px 'JetBrains Mono'"; ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(d+'m', ML-5, y);
+    ctx.strokeStyle='rgba(45,60,80,0.5)'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(ML-3,y); ctx.lineTo(ML,y); ctx.stroke();
+  }
+
+  // Y axis label
+  ctx.save(); ctx.fillStyle='#8a95a8'; ctx.font="11px 'JetBrains Mono'";
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.translate(13, MT + PH/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Depth (TVD, m)', 0, 0); ctx.restore();
+}
+
+function niceTick(range){
+  const raw = range;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  if(norm < 1.5) return mag;
+  if(norm < 3)   return 2*mag;
+  if(norm < 7)   return 5*mag;
+  return 10*mag;
+}
+
+// Trajectory hover
+document.getElementById('trajectoryCanvas').addEventListener('mousemove', function(e){
+  const tt = document.getElementById('trajTooltip');
+  if(!_traj) { tt.style.display='none'; return; }
+  const rect = this.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+  const { mX, mY, ML, MR, MT, MB, W, H, PW, PH, topRes, goc, owc, vt, depthMax, depthMin, hMin, hMax, dipInPlane } = _traj;
+
+  if(mx < ML || mx > W-MR || my < MT || my > H-MB){ tt.style.display='none'; return; }
+
+  const h = hMin + (mx - ML) / PW * (hMax - hMin);
+  const d = depthMin + (my - MT) / PH * (depthMax - depthMin);
+
+  // Formation top at this horiz offset, anchored at entry point
+  const entryH = topRes * Math.tan(toR(_traj.wi || 0));
+  const topAtH  = topRes + (h - entryH) * Math.tan(toR(dipInPlane));
+  const baseAtH = vt ? topAtH + vt : null;
+
+  const lines = [
+    `Horiz offset: ${h.toFixed(0)} m`,
+    `TVD: ${d.toFixed(0)} m`,
+    `Formation top at this offset: ${topAtH.toFixed(0)} m`,
+    baseAtH !== null ? `Formation base at this offset: ${baseAtH.toFixed(0)} m` : null,
+    `GOC: ${goc.toFixed(0)} m`,
+    `OWC: ${owc.toFixed(0)} m`,
+  ].filter(Boolean);
+
+  tt.innerHTML = lines.join('<br>');
+  tt.style.display = 'block';
+  let tx = mx + 14, ty = my - 10;
+  if(tx + 220 > W) tx = mx - 220;
+  if(ty < 4) ty = 4;
+  tt.style.left = tx + 'px';
+  tt.style.top  = ty + 'px';
+});
+document.getElementById('trajectoryCanvas').addEventListener('mouseleave', function(){
+  document.getElementById('trajTooltip').style.display = 'none';
+});
+
+// ─── ROSE DIAGRAM ─────────────────────────────────────────────────────────────
+function drawRose(fd, fa, wi, wa){
+  const canvas = document.getElementById('roseCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const dispS = 320;
+  canvas.style.width  = dispS + 'px';
+  canvas.style.height = dispS + 'px';
+  canvas.width  = Math.round(dispS * dpr);
+  canvas.height = Math.round(dispS * dpr);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const W = dispS, H = dispS;
+  const cx = W/2, cy = H/2, R = W/2 - 22;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Background
+  ctx.fillStyle='#0c1016';
+  ctx.beginPath(); ctx.arc(cx,cy,R+18,0,Math.PI*2); ctx.fill();
+
+  // Concentric rings
+  [0.33,0.66,1].forEach(f => {
+    ctx.strokeStyle=`rgba(35,48,65,${f===1?1:0.6})`; ctx.lineWidth=1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(cx,cy,R*f,0,Math.PI*2); ctx.stroke();
+  });
+
+  // Cardinal axes
+  ctx.strokeStyle='rgba(50,68,90,0.7)'; ctx.lineWidth=1; ctx.setLineDash([2,4]);
+  [[0,-R],[0,R],[R,0],[-R,0]].forEach(([dx,dy])=>{
+    ctx.beginPath(); ctx.moveTo(cx-dx,cy-dy); ctx.lineTo(cx+dx,cy+dy); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Cardinal labels
+  ctx.fillStyle='#8a95a8'; ctx.font="bold 11px 'JetBrains Mono'";
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('N', cx, cy-R-11);
+  ctx.fillText('S', cx, cy+R+11);
+  ctx.fillText('E', cx+R+11, cy);
+  ctx.fillText('W', cx-R-11, cy);
+
+  // az → canvas angle: N=up, CW positive
+  // az=0  → -π/2 (up)
+  // az=90 → 0    (right)
+  const az2a = az => toR(az) - Math.PI/2;
+
+  // ─── Formation Azimuth (red) ───────────────────────────────────────────────
+  // Full diameter line in direction FA.
+  // Length: FD=0 → full diameter (R each side), FD=90 → zero
+  const faLineLen = (1 - fd/90) * R;
+  const faAngle   = az2a(fa);
+
+  if(faLineLen > 1){
+    const fax1 = cx + Math.cos(faAngle) * faLineLen;
+    const fay1 = cy + Math.sin(faAngle) * faLineLen;
+    const fax2 = cx - Math.cos(faAngle) * faLineLen;
+    const fay2 = cy - Math.sin(faAngle) * faLineLen;
+
+    ctx.save(); ctx.strokeStyle='#cc2222'; ctx.lineWidth=2.5; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(fax2,fay2); ctx.lineTo(fax1,fay1); ctx.stroke();
+    // Arrow at FA end
+    ctx.fillStyle='#cc2222';
+    ctx.beginPath();
+    ctx.moveTo(fax1, fay1);
+    ctx.lineTo(fax1 - 9*Math.cos(faAngle-0.38), fay1 - 9*Math.sin(faAngle-0.38));
+    ctx.lineTo(fax1 - 9*Math.cos(faAngle+0.38), fay1 - 9*Math.sin(faAngle+0.38));
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+    // Label
+    const lblR = faLineLen + 14;
+    ctx.fillStyle='#cc2222'; ctx.font="10px 'JetBrains Mono'";
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(fa+'°', cx + Math.cos(faAngle)*lblR, cy + Math.sin(faAngle)*lblR);
+  }
+
+  // ─── Formation Dip (violet dashed) ────────────────────────────────────────
+  // Direction: PERPENDICULAR to FA, i.e. FA + 90°
+  // This is the dip direction (downslope) in map view.
+  // Length: FD=0 → full radius (flat bed, no map expression),
+  //         FD=90 → full radius (very steep — maximum dip expression)
+  // Wait — re-reading spec:
+  //   "if FD=0, violet line is radius" → full R
+  //   "if FD=90, both are dot" → 0
+  // So: dipLen = (1 - fd/90) * R  AND direction = FA + 90
+  const dipLen  = (1 - fd/90) * R;
+  const dipAngle = az2a(fa + 90);  // perpendicular to FA
+
+  if(dipLen > 1){
+    const dax = cx + Math.cos(dipAngle) * dipLen;
+    const day = cy + Math.sin(dipAngle) * dipLen;
+    ctx.save(); ctx.strokeStyle='#cc44cc'; ctx.lineWidth=1.8; ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(dax,day); ctx.stroke();
+    ctx.restore();
+    // Label near midpoint, offset perpendicularly
+    ctx.fillStyle='#cc44cc'; ctx.font="10px 'JetBrains Mono'";
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    const midX = cx + Math.cos(dipAngle)*dipLen*0.55;
+    const midY = cy + Math.sin(dipAngle)*dipLen*0.55;
+    const perpOff = 13;
+    ctx.fillText(fd+'°',
+      midX + Math.cos(dipAngle + Math.PI/2) * perpOff,
+      midY + Math.sin(dipAngle + Math.PI/2) * perpOff);
+  }
+
+  // ─── Wellbore (grey) ──────────────────────────────────────────────────────
+  // Direction: WA; Length: WI=0 → full R, WI=90 → 0
+  const wbLen   = (1 - wi/90) * R;
+  const wbAngle = az2a(wa);
+
+  if(wbLen > 1){
+    const wbx = cx + Math.cos(wbAngle) * wbLen;
+    const wby = cy + Math.sin(wbAngle) * wbLen;
+    ctx.save(); ctx.strokeStyle='#aaaaaa'; ctx.lineWidth=2; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(wbx,wby); ctx.stroke();
+    ctx.restore();
+    // Tip label only (no dot)
+    ctx.fillStyle='#aaaaaa'; ctx.font="10px 'JetBrains Mono'";
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    const wlblR = wbLen + 14;
+    ctx.fillText(wi+'°', cx + Math.cos(wbAngle)*wlblR, cy + Math.sin(wbAngle)*wlblR);
+  }
+
+  // Centre dot
+  ctx.beginPath(); ctx.arc(cx,cy,3,0,Math.PI*2);
+  ctx.fillStyle='#445566'; ctx.fill();
+
+  // Note
+  ctx.fillStyle='#4a5a6a'; ctx.font="9px 'JetBrains Mono'";
+  ctx.textAlign='right'; ctx.textBaseline='alphabetic';
+  ctx.fillText('(equal angle)', W-4, H-4);
+}
+
+// ─── LIVE INPUT LISTENERS ───────────────────────────────────────────────────
+['fd','fa','wi','wa','tstInput','mdInput','topRes','goc','owc'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input',  scheduleCalc);
+  el.addEventListener('change', scheduleCalc);
+});
+
+// Resize: redraw canvases
+window.addEventListener('resize', () => scheduleCalc());
+
+window.addEventListener('load', () => { calculate(); });
+</script>
+</body>
+</html>

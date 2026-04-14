@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About | Well Planning Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0c0f; --surface:#111318; --surface2:#181c23; --surface3:#1e232d;
+  --border:#252b37; --border2:#2e3747;
+  --accent:#00d4ff; --accent2:#ff6b35;
+  --text:#e8edf5; --text2:#8a95a8; --text3:#5a6475;
+  --pink:#ff3d8a; --yellow:#ffd600; --green:#00e676; --red:#ff4444;
+  --nb-w:224px; --nb-col:46px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,212,255,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03)1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* NAVBAR — identical to guide.html */
+.nb{position:fixed;left:0;top:0;bottom:0;width:var(--nb-col);background:#0d1017;
+  border-right:1px solid #1e2530;display:flex;flex-direction:column;z-index:200;
+  overflow:hidden;transition:width 0.22s cubic-bezier(0.4,0,0.2,1);}
+.nb.open{width:var(--nb-w);}
+.nb-toggle{display:flex;align-items:center;justify-content:center;width:var(--nb-col);
+  height:var(--nb-col);flex-shrink:0;cursor:pointer;border-bottom:1px solid #1e2530;
+  background:transparent;border-left:none;border-top:none;border-right:none;padding:0;}
+.nb-toggle-icon{width:18px;height:14px;position:relative;}
+.nb-toggle-icon span{display:block;position:absolute;left:0;right:0;height:1.5px;
+  background:#8a95a8;border-radius:1px;
+  transition:transform 0.22s ease,opacity 0.18s ease,top 0.22s ease;}
+.nb-toggle-icon span:nth-child(1){top:0;}
+.nb-toggle-icon span:nth-child(2){top:6px;}
+.nb-toggle-icon span:nth-child(3){top:12px;}
+.nb.open .nb-toggle-icon span:nth-child(1){top:6px;transform:rotate(45deg);background:#00d4ff;}
+.nb.open .nb-toggle-icon span:nth-child(2){opacity:0;transform:translateX(-6px);}
+.nb.open .nb-toggle-icon span:nth-child(3){top:6px;transform:rotate(-45deg);background:#00d4ff;}
+.nb-section{font-size:0.5rem;letter-spacing:0.18em;text-transform:uppercase;color:#3a4558;
+  padding:14px 14px 5px;white-space:nowrap;overflow:hidden;opacity:0;pointer-events:none;transition:opacity 0.16s;}
+.nb.open .nb-section{opacity:1;}
+.nb-items{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 0;}
+.nb-items::-webkit-scrollbar{width:3px;}
+.nb-items::-webkit-scrollbar-thumb{background:#1e2530;border-radius:2px;}
+.nb-item{display:flex;align-items:center;gap:0;padding:0;height:40px;color:#5a6880;
+  font-family:'JetBrains Mono',monospace;font-size:0.68rem;letter-spacing:0.03em;
+  text-decoration:none;white-space:nowrap;border-left:2px solid transparent;
+  cursor:pointer;background:transparent;width:100%;
+  transition:color 0.14s,background 0.14s,border-color 0.14s;position:relative;}
+.nb-item:hover{color:#8a95a8;background:rgba(255,255,255,0.03);}
+.nb-item.active{color:#00d4ff;border-left-color:#00d4ff;background:rgba(0,212,255,0.07);}
+.nb-icon{width:var(--nb-col);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.nb-icon svg{width:15px;height:15px;}
+.nb-label{flex:1;overflow:hidden;text-overflow:ellipsis;padding-right:12px;
+  opacity:0;pointer-events:none;transition:opacity 0.16s;}
+.nb.open .nb-label{opacity:1;pointer-events:auto;}
+.nb-item::after{content:attr(data-tip);position:absolute;left:calc(var(--nb-col) + 8px);top:50%;
+  transform:translateY(-50%);background:#181c23;border:1px solid #252b37;color:#e8edf5;
+  font-size:0.64rem;font-family:'JetBrains Mono',monospace;padding:5px 10px;border-radius:5px;
+  white-space:nowrap;pointer-events:none;z-index:300;display:none;box-shadow:0 4px 16px rgba(0,0,0,0.5);}
+.nb:not(.open) .nb-item:hover::after{display:block;}
+.nb-divider{height:1px;background:#1a2030;margin:5px 14px;}
+.nb-footer{padding:10px 14px;border-top:1px solid #1e2530;font-size:0.52rem;color:#3a4558;
+  font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;
+  opacity:0;transition:opacity 0.16s;flex-shrink:0;}
+.nb.open .nb-footer{opacity:1;}
+body::after{content:"";position:fixed;inset:0;background:rgba(0,0,0,0);z-index:150;
+  pointer-events:none;transition:background 0.25s ease;}
+body.nb-open::after{background:rgba(0,0,0,0.5);}
+
+/* LAYOUT */
+.app-wrapper{position:relative;z-index:1;max-width:860px;margin:0 auto;
+  padding:0 32px 60px calc(32px + var(--nb-col));}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;padding:20px 0 22px;
+  border-bottom:1px solid var(--border);margin-bottom:36px;flex-wrap:wrap;gap:12px;}
+.logo-group{display:flex;align-items:center;gap:14px;}
+.logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),#0055cc);
+  border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.logo-icon svg{width:18px;height:18px;}
+.app-title{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;letter-spacing:-0.02em;}
+.app-title span{color:var(--accent);}
+.header-meta{font-size:0.63rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px;}
+.badge{background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);color:var(--accent);
+  padding:4px 12px;border-radius:20px;font-size:0.63rem;letter-spacing:0.08em;text-transform:uppercase;}
+
+/* CONTENT */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+  overflow:hidden;margin-bottom:16px;}
+.panel:last-child{margin-bottom:0;}
+.panel-header{display:flex;align-items:center;gap:9px;padding:12px 16px;
+  background:var(--surface2);border-bottom:1px solid var(--border);}
+.panel-dot{width:7px;height:7px;border-radius:50%;}
+.panel-title{font-family:'Syne',sans-serif;font-size:0.78rem;font-weight:700;
+  letter-spacing:0.12em;text-transform:uppercase;color:var(--text2);}
+.panel-body{padding:20px 22px;}
+
+p{font-size:0.72rem;color:var(--text2);line-height:1.85;margin-bottom:10px;}
+p:last-child{margin-bottom:0;}
+
+/* Hero block */
+.hero{text-align:center;padding:40px 20px 36px;}
+.hero-icon{width:68px;height:68px;background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(0,85,204,0.2));
+  border:1px solid rgba(0,212,255,0.25);border-radius:18px;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 18px;}
+.hero-icon svg{width:32px;height:32px;color:var(--accent);}
+.hero-title{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;
+  letter-spacing:-0.03em;margin-bottom:6px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{font-size:0.72rem;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px;}
+.hero-desc{font-size:0.75rem;color:var(--text2);line-height:1.9;max-width:520px;margin:0 auto;}
+
+/* Stat row */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);}
+.stat-cell{background:var(--surface2);padding:16px 14px;text-align:center;}
+.stat-val{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--accent);margin-bottom:3px;}
+.stat-label{font-size:0.58rem;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;}
+
+/* Feature list */
+.feature-list{display:flex;flex-direction:column;gap:12px;}
+.feature{display:flex;gap:13px;align-items:flex-start;}
+.feature-icon{width:32px;height:32px;border-radius:8px;background:var(--surface3);
+  border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.feature-icon svg{width:14px;height:14px;color:var(--accent);}
+.feature-text{flex:1;}
+.feature-name{font-size:0.72rem;font-weight:700;color:var(--text);margin-bottom:3px;}
+.feature-desc{font-size:0.68rem;color:var(--text3);line-height:1.65;}
+
+/* Tech stack */
+.tech-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+.tech-chip{background:var(--surface3);border:1px solid var(--border2);
+  padding:4px 10px;border-radius:20px;font-size:0.61rem;color:var(--text2);letter-spacing:0.04em;}
+
+/* Divider */
+.divider{height:1px;background:var(--border);margin:18px 0;}
+
+/* Credit block */
+.credit{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;
+  background:var(--surface3);border-radius:8px;margin-top:8px;}
+.credit-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1a2535,#2a3a50);
+  border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  font-size:0.8rem;font-weight:700;color:var(--text2);}
+.credit-name{font-size:0.72rem;font-weight:700;color:var(--text);margin-bottom:2px;}
+.credit-role{font-size:0.62rem;color:var(--text3);}
+
+.watermark{text-align:center;margin-top:40px;font-size:0.55rem;color:var(--text3);letter-spacing:0.08em;}
+</style>
+</head>
+<body id="page-about">
+
+<nav class="nb" id="nb">
+  <button class="nb-toggle" id="nb-toggle" aria-label="Toggle navigation">
+    <div class="nb-toggle-icon"><span></span><span></span><span></span></div>
+  </button>
+  <div class="nb-section">Navigation</div>
+  <div class="nb-items">
+    <a class="nb-item" id="nav-intersection" href="wellintersection.html" data-tip="Well Intersection Calculator">
+      <span class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M8 6h8M9 10h6M10 14h4M11 18h2"/></svg></span>
+      <span class="nb-label">Well Intersection</span>
+    </a>
+    <a class="nb-item" id="nav-sweep" href="effectseries.html" data-tip="Dip & Azimuth Sweep">
+      <span class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+      <span class="nb-label">Dip &amp; Az Sweep</span>
+    </a>
+    <a class="nb-item" id="nav-montecarlo" href="tstmd.html" data-tip="TST ↔ MD Monte Carlo">
+      <span class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+      <span class="nb-label">TST ↔ MD Monte Carlo</span>
+    </a>
+    <div class="nb-divider"></div>
+    <a class="nb-item" id="nav-guide" href="guide.html" data-tip="User Guide">
+      <span class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+      <span class="nb-label">Guide</span>
+    </a>
+    <a class="nb-item active" id="nav-about" href="about.html" data-tip="About">
+      <span class="nb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
+      <span class="nb-label">About</span>
+    </a>
+  </div>
+  <div class="nb-footer">Well Planning Suite · v1.0</div>
+</nav>
+
+<div class="app-wrapper">
+<header>
+  <div class="logo-group">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+      </svg>
+    </div>
+    <div>
+      <div class="app-title">About <span>the Suite</span></div>
+      <div class="header-meta">Well Planning Suite · v1.0</div>
+    </div>
+  </div>
+  <div class="badge">v1.0</div>
+</header>
+
+<!-- Hero -->
+<div class="panel">
+  <div class="hero">
+    <div class="hero-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="2" x2="12" y2="22"/><path d="M8 6h8M9 10h6M10 14h4M11 18h2"/>
+      </svg>
+    </div>
+    <div class="hero-title">Well Planning <span>Suite</span></div>
+    <div class="hero-sub">Browser-based well geometry toolkit</div>
+    <div class="hero-desc">
+      A suite of interactive calculators for computing the geometric relationships
+      between a drilled wellbore and subsurface formations. Built for exploration
+      geologists and drilling engineers who need fast, transparent results without
+      a spreadsheet.
+    </div>
+  </div>
+  <div class="stat-row">
+    <div class="stat-cell">
+      <div class="stat-val">3</div>
+      <div class="stat-label">Calculator Tools</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-val">50k</div>
+      <div class="stat-label">Max MC Iterations</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-val">0</div>
+      <div class="stat-label">Server Requests</div>
+    </div>
+  </div>
+</div>
+
+<!-- Features -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-dot" style="background:#00d4ff"></div>
+    <span class="panel-title">Features</span>
+  </div>
+  <div class="panel-body">
+    <div class="feature-list">
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div class="feature-text">
+          <div class="feature-name">Exact geometric intersection angle</div>
+          <div class="feature-desc">Uses the full 3D dot-product formula between the well unit vector and the formation normal. No approximations. Works for any combination of FD, FA, WI, WA.</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <div class="feature-text">
+          <div class="feature-name">Monte Carlo uncertainty propagation</div>
+          <div class="feature-desc">Triangular-distribution sampling across all five input parameters with up to 50 000 iterations. Outputs a full CDF with P5–P95 percentiles, mean, and standard deviation.</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </div>
+        <div class="feature-text">
+          <div class="feature-name">Formation dip &amp; azimuth sweep</div>
+          <div class="feature-desc">Plots MD (or TST) as a family of curves across a full range of dip and azimuth values. Up to 14 azimuth series. Includes a 3×3 case matrix for Min / Base / Max combinations.</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="2" x2="12" y2="22"/><path d="M8 6h8M9 10h6M10 14h4M11 18h2"/>
+          </svg>
+        </div>
+        <div class="feature-text">
+          <div class="feature-name">Trajectory cross-section &amp; rose diagram</div>
+          <div class="feature-desc">DPR-aware canvas rendering of the wellbore in cross-section with formation top, base, GOC, and OWC. Compass rose shows formation azimuth, dip direction, and wellbore orientation with geometrically proportional line lengths.</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="feature-text">
+          <div class="feature-name">Runs entirely in the browser</div>
+          <div class="feature-desc">No server, no login, no data upload. All computation happens locally in JavaScript. Your well data never leaves your machine.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tech -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-dot" style="background:#ffd600"></div>
+    <span class="panel-title">Built With</span>
+  </div>
+  <div class="panel-body">
+    <p>Pure HTML, CSS, and vanilla JavaScript — no build step, no framework, no dependencies beyond a single charting library.</p>
+    <div class="tech-row">
+      <span class="tech-chip">HTML5 Canvas</span>
+      <span class="tech-chip">CSS Custom Properties</span>
+      <span class="tech-chip">Vanilla JavaScript</span>
+      <span class="tech-chip">Chart.js 4.4</span>
+      <span class="tech-chip">JetBrains Mono</span>
+      <span class="tech-chip">Syne</span>
+      <span class="tech-chip">devicePixelRatio-aware rendering</span>
+      <span class="tech-chip">Triangular distribution sampling</span>
+    </div>
+  </div>
+</div>
+
+<!-- Assumptions -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-dot" style="background:#ff6b35"></div>
+    <span class="panel-title">Assumptions &amp; Limitations</span>
+  </div>
+  <div class="panel-body">
+    <p>The suite implements the geometric model originally described by Simon Stewart (October 2006) and extended by Giuseppe D'Antonio (September 2009 / March 2010).</p>
+    <div class="divider"></div>
+    <p style="color:var(--text3);font-size:0.68rem;line-height:1.8;">
+      · All angles are in degrees.<br>
+      · Assumes <b>no curvature</b> of the wellbore or formation — straight well, planar bed.<br>
+      · Formation dip is measured <b>down from horizontal</b>.<br>
+      · Well inclination is measured <b>up from vertical</b>.<br>
+      · Formation azimuth is the <b>dip direction</b> (not strike). Strike = FA − 90°.<br>
+      · Depths are entered as positive TVD values; signs are handled internally.<br>
+      · The trajectory cross-section uses <b>apparent dip</b> projected into the wellbore azimuth plane — this is the geologically correct view for a vertical section.
+    </p>
+  </div>
+</div>
+
+<!-- Credits -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-dot" style="background:#39ff14"></div>
+    <span class="panel-title">Credits</span>
+  </div>
+  <div class="panel-body">
+    <p>The underlying geometric formulae are based on the original Excel tools by:</p>
+    <div class="credit">
+      <div class="credit-avatar">SS</div>
+      <div>
+        <div class="credit-name">Simon Stewart</div>
+        <div class="credit-role">Original geometric model · October 2006</div>
+      </div>
+    </div>
+    <div class="credit" style="margin-top:8px;">
+      <div class="credit-avatar">GD</div>
+      <div>
+        <div class="credit-name">Giuseppe D'Antonio</div>
+        <div class="credit-role">Extended Excel tool · September 2009 &amp; March 2010</div>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <p>This web implementation was built to make the same calculations accessible directly in the browser, with live updates, uncertainty quantification, and interactive visualisations.</p>
+  </div>
+</div>
+
+<div class="watermark">Well Planning Suite · v1.0 · All calculations run locally in your browser · No data is sent to any server</div>
+</div><!-- app-wrapper -->
+
+<script>
+(function(){
+  const nb = document.getElementById('nb');
+  const toggle = document.getElementById('nb-toggle');
+  let open = false;
+  toggle.addEventListener('click', () => {
+    open = !open;
+    nb.classList.toggle('open', open);
+    document.body.classList.toggle('nb-open', open);
+  });
+})();
+</script>
+</body>
+</html>
