@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-mode">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Well Data Acquisition Plan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #242424;
+            --bg-tertiary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border-color: #3a3a3a;
+            --accent: #4a9eff;
+            --priority-1: #2ecc71;
+            --priority-2: #f1c40f;
+            --disabled: #e0e0e0;
+            --shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        html.light-mode {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #eff0f2;
+            --text-primary: #1a1a1a;
+            --text-secondary: #555555;
+            --border-color: #d0d0d0;
+            --accent: #0066cc;
+            --shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: none;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* Table of Contents */
+        .toc {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 16px;
+            margin-bottom: 32px;
+        }
+
+        .toc-title {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .toc-links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toc-link {
+            padding: 8px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--accent);
+            background: transparent;
+            border: none;
+            text-align: left;
+            transition: all 0.2s;
+        }
+
+        .toc-link:hover {
+            background: var(--bg-tertiary);
+            padding-left: 16px;
+        }
+
+        .toc-link.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .add-hole-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+
+        .add-hole-btn:hover {
+            opacity: 0.9;
+        }
+
+        .section {
+            margin-bottom: 40px;
+            scroll-margin-top: 100px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 13px;
+        }
+
+        /* Plan Table */
+        .plan-table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-secondary);
+        }
+
+        .plan-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .plan-table th {
+            background: var(--bg-tertiary);
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .plan-table td {
+            padding: 12px 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+        }
+
+        .plan-table tr:hover td {
+            background: var(--bg-secondary);
+        }
+
+        .hole-section-cell {
+            font-weight: 500;
+            color: var(--text-primary);
+            min-width: 140px;
+        }
+
+        .tool-cell {
+            text-align: center;
+            padding: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            user-select: none;
+            min-width: 80px;
+            position: relative;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tool-cell:hover {
+            opacity: 0.9;
+        }
+
+        .cell-empty {
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+        }
+
+        .cell-p1 {
+            background: var(--priority-1);
+            color: #000000;
+            font-weight: 600;
+        }
+
+        .cell-p2 {
+            background: var(--priority-2);
+            color: #000000;
+            font-weight: 600;
+        }
+
+        .cell-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-height: 30px;
+        }
+
+        .cell-text {
+            max-width: 100%;
+            word-break: break-word;
+        }
+
+        .cell-edit-icon {
+            opacity: 0;
+            font-size: 10px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .tool-cell:hover .cell-edit-icon {
+            opacity: 0.6;
+        }
+
+        /* Hole Section Management */
+        .hole-section-editor {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 24px;
+        }
+
+        .hole-input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-field label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .input-field input {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+        }
+
+        .input-field input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.1);
+        }
+
+        .hole-sections-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .hole-section-chip {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            padding: 12px;
+            border-radius: 4px;
+            cursor: grab;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            user-select: none;
+        }
+
+        .hole-section-chip:hover {
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+        }
+
+        .hole-section-chip.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .hole-section-chip.drag-over {
+            border-color: var(--accent);
+            background: var(--bg-tertiary);
+        }
+
+        .chip-text {
+            flex: 1;
+            word-break: break-word;
+        }
+
+        .delete-chip {
+            background: transparent;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 0 0 8px;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* Questions Section */
+        .questions-container {
+            display: grid;
+            gap: 20px;
+        }
+
+        .tool-section {
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--accent);
+            border-top: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 8px;
+        }
+
+        .tool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tool-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .tool-priority {
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        .priority-p1 {
+            background: var(--priority-1);
+            color: #000;
+        }
+
+        .priority-p2 {
+            background: var(--priority-2);
+            color: #000;
+        }
+
+        .priority-none {
+            background: var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .question {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 12px;
+        }
+
+        .question-text {
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .question-options {
+            display: flex;
+            gap: 12px;
+        }
+
+        .option-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover {
+            border-color: var(--accent);
+        }
+
+        .option-btn.selected {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* Info Box */
+        .info-box {
+            background: var(--bg-secondary);
+            border-left: 4px solid var(--accent);
+            padding: 16px;
+            border-radius: 4px;
+            margin: 24px 0;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .info-box h4 {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            letter-spacing: 0.2px;
+        }
+
+        .info-box p {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .info-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+            font-size: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 3px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            margin: 10% auto;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            width: 90%;
+            max-width: 400px;
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            font-size: 12px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+
+        .modal-btn:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .modal-btn.primary {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .modal-btn.primary:hover {
+            opacity: 0.9;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            margin-bottom: 16px;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 60px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .footer p {
+            margin: 4px 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .hole-input-group {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+
+            .controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .plan-table {
+                font-size: 11px;
+            }
+
+            .plan-table th,
+            .plan-table td {
+                padding: 8px 4px;
+            }
+
+            .holes-sections-list {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .toc {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>Well Data Acquisition Plan</h1>
+        <div class="controls">
+            <button class="theme-toggle" id="themeToggle">☀️ Light Mode</button>
+        </div>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc">
+        <div class="toc-title">Navigate To:</div>
+        <div class="toc-links">
+            <button class="toc-link active" onclick="scrollToSection('wellDesignSection')">Well Design - Hole Sections</button>
+            <button class="toc-link" onclick="scrollToSection('planSection')">Data Acquisition Plan</button>
+            <button class="toc-link" onclick="scrollToSection('questionsSection')">Tool Requirements by Hole Section</button>
+        </div>
+    </div>
+
+    <!-- Section 1: Add/Edit Hole Sections -->
+    <div class="section" id="wellDesignSection">
+        <h2 class="section-title">Well Design - Hole Sections</h2>
+        <div class="hole-section-editor">
+            <div class="hole-input-group">
+                <div class="input-field">
+                    <label>Hole Size (e.g., 22" x 30" HS or 22")</label>
+                    <input type="text" id="holeSize" placeholder="Enter hole size">
+                </div>
+                <div class="input-field">
+                    <label>Casing/Liner Information (optional)</label>
+                    <input type="text" id="casingInfo" placeholder="e.g., 20\" Casing Shoe">
+                </div>
+                <div class="input-field">
+                    <label>Notes (optional)</label>
+                    <input type="text" id="holeNotes" placeholder="Additional notes">
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button class="add-hole-btn" id="addHoleBtn">+ Add Hole Section</button>
+                </div>
+            </div>
+
+            <div class="hole-sections-list" id="holesList"></div>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background: var(--priority-1);"></div>
+            <span><strong>Priority 1:</strong> Critical data (Green)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: var(--priority-2);"></div>
+            <span><strong>Priority 2:</strong> Important data (Yellow)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: var(--bg-primary); border: 1px solid var(--border-color);"></div>
+            <span><strong>Not Required:</strong> Not needed (White)</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: var(--bg-primary); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-primary); font-weight: 600;">*</div>
+            <span><strong>Conditional:</strong> May be activated during drilling</span>
+        </div>
+    </div>
+
+    <!-- Section 2: Data Acquisition Plan Table -->
+    <div class="section" id="planSection">
+        <h2 class="section-title">Data Acquisition Plan</h2>
+        <div class="plan-table-wrapper">
+            <table class="plan-table" id="planTable">
+                <thead>
+                    <tr>
+                        <th>Hole Section</th>
+                        <th>Gamma Ray</th>
+                        <th>Resistivity</th>
+                        <th>Neutron Density</th>
+                        <th>ALD Image</th>
+                        <th>GR at Bit</th>
+                        <th>PWD</th>
+                        <th>Pressures</th>
+                        <th>Sonic Dipole</th>
+                        <th>CHWD Cement Eval</th>
+                        <th>ML High Res Cuttings</th>
+                    </tr>
+                </thead>
+                <tbody id="planTableBody">
+                    <!-- Populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Priority Information -->
+    <div class="info-box">
+        <h4>Understanding Data Priorities</h4>
+        <p><strong>Priority 1 Data (Green):</strong> Trip to change to back-up tool. Can only be dropped with the agreement of the Wells Superintendent, Rig-Line SPA, Depletion Management TL, New Well Delivery TL and Drilling Engineering TL. Completions Engineering TL to be consulted.</p>
+        <p><strong>Priority 2 Data (Yellow):</strong> Proceed without this data if the tool fails but change out if the opportunity arises. Nevertheless, Wells Superintendent, Rig-Line SPA, Depletion Management TL, New Well Delivery TL and Drilling Engineering TL may elect to acquire the data, depending on the criticality of the log. Completions Engineering TL to be consulted.</p>
+        <p><strong>Note (*):</strong> Conditional activation. Subject to be activated during drilling if needed. For ALD Image specifically: can be activated during drilling if the need is identified.</p>
+    </div>
+
+    <!-- Section 3: Detailed Tool Questions by Hole Section -->
+    <div class="section" id="questionsSection" style="display: none;">
+        <h2 class="section-title">Tool Requirements by Hole Section</h2>
+        
+        <div class="tabs" id="holeTabs">
+            <!-- Populated dynamically -->
+        </div>
+
+        <div id="questionsContent">
+            <!-- Populated dynamically -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p><strong>Well Data Acquisition Planning Tool</strong></p>
+        <p>Prototype - Developed by Fuad Ildarov</p>
+        <p>⚠️ This is a prototype tool. Should not be referred to or used for production well planning at this moment.</p>
+    </div>
+</div>
+
+<!-- Modal for editing cell content -->
+<div id="cellModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">Edit Cell Content</div>
+        <input type="text" id="cellModalInput" class="modal-input" placeholder="Enter content (or leave empty for automatic)">
+        <div class="modal-buttons">
+            <button class="modal-btn" onclick="closeCellModal()">Cancel</button>
+            <button class="modal-btn primary" onclick="saveCellContent()">Save</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==================== DATA MANAGEMENT ====================
+    const toolsList = [
+        'Gamma Ray',
+        'Resistivity',
+        'Neutron Density',
+        'ALD Image',
+        'GR at Bit',
+        'PWD',
+        'Pressures',
+        'Sonic Dipole',
+        'CHWD Cement Eval',
+        'ML High Res Cuttings'
+    ];
+
+    // Questions for each tool (can be edited later)
+    const toolQuestions = {
+        'Gamma Ray': [
+            'Is lithology identification critical for this section?',
+            'Do you need real-time correlation with offset wells?',
+            'Is bed boundary detection required?',
+            'Do you need high-resolution vertical sequences?',
+            'Is quantitative analysis needed?'
+        ],
+        'Resistivity': [
+            'Is hydrocarbon detection essential in this zone?',
+            'Do you need fluid contact identification?',
+            'Is formation evaluation required?',
+            'Do you need invasion profile?',
+            'Is bed-by-bed resistivity analysis needed?'
+        ],
+        'Neutron Density': [
+            'Is porosity determination critical?',
+            'Do you need fluid identification?',
+            'Is lithology prediction important?',
+            'Do you need density-neutron cross-plots?',
+            'Is weight-on-bit monitoring required?'
+        ],
+        'ALD Image': [
+            'Can this tool be activated during drilling if needed instead of running at bit depth?'
+        ],
+        'GR at Bit': [
+            'Is real-time geosteering needed?',
+            'Do you need precise stratigraphic boundaries?',
+            'Is high-frequency correlation required?',
+            'Do you need early-warning formation tops?',
+            'Is hole positioning critical?'
+        ],
+        'PWD': [
+            'Is pore pressure prediction critical?',
+            'Do you need real-time pressure overbalance?',
+            'Is pressure transmission data needed?',
+            'Do you need drilling dynamics analysis?',
+            'Is overpressure detection essential?'
+        ],
+        'Pressures': [
+            'Is downhole pressure monitoring required?',
+            'Do you need hydrostatic pressure data?',
+            'Is wellbore stability assessment needed?',
+            'Do you need pressure trends?',
+            'Is formation breakdown prediction needed?'
+        ],
+        'Sonic Dipole': [
+            'Is compressional wave velocity needed?',
+            'Do you need shear wave analysis?',
+            'Is mechanical property determination required?',
+            'Do you need anisotropy correction?',
+            'Is synthetic seismic tie critical?'
+        ],
+        'CHWD Cement Eval': [
+            'Is cement quality assessment required?',
+            'Do you need bond evaluation?',
+            'Is channel detection critical?',
+            'Do you need real-time cement monitoring?',
+            'Is post-job evaluation needed?'
+        ],
+        'ML High Res Cuttings': [
+            'Is high-resolution lithology needed?',
+            'Do you need paleontological data?',
+            'Is organic geochemistry analysis required?',
+            'Do you need cuttings-based stratigraphy?',
+            'Is mudline to surface analysis needed?'
+        ]
+    };
+
+    // Priority rules (simplified - can be expanded)
+    function determinePriority(answers) {
+        const yesCount = answers.filter(a => a === 'yes').length;
+        const totalAnswers = answers.filter(a => a !== null).length;
+        
+        if (totalAnswers === 0) return null;
+        
+        const yesRatio = yesCount / totalAnswers;
+        
+        if (yesRatio >= 0.6) return 1;  // Priority 1
+        if (yesRatio >= 0.3) return 2;  // Priority 2
+        return null;  // Not required
+    }
+
+    // ==================== STATE MANAGEMENT ====================
+    let state = {
+        holes: [],
+        toolAnswers: {},
+        cellOverrides: {},
+        cellConditional: {},
+        draggedIndex: null
+    };
+
+    let currentCellEdit = null;
+
+    // ==================== UI FUNCTIONS ====================
+
+    function renderHolesList() {
+        const container = document.getElementById('holesList');
+        container.innerHTML = '';
+
+        if (state.holes.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); font-size: 13px; grid-column: 1/-1;">No hole sections added yet. Add one to get started.</p>';
+            updatePlanTable();
+            return;
+        }
+
+        state.holes.forEach((hole, index) => {
+            const chip = document.createElement('div');
+            chip.className = 'hole-section-chip';
+            chip.draggable = true;
+            chip.dataset.index = index;
+            
+            chip.innerHTML = `
+                <span class="chip-text">${hole.size}${hole.casing ? ' (' + hole.casing + ')' : ''}</span>
+                <button class="delete-chip" onclick="deleteHole(event, ${index})">✕</button>
+            `;
+
+            chip.addEventListener('dragstart', startDrag);
+            chip.addEventListener('dragend', endDrag);
+            chip.addEventListener('dragover', dragOver);
+            chip.addEventListener('drop', drop);
+            chip.addEventListener('dragleave', dragLeave);
+
+            container.appendChild(chip);
+        });
+
+        updatePlanTable();
+    }
+
+    function startDrag(e) {
+        state.draggedIndex = parseInt(e.target.closest('.hole-section-chip').dataset.index);
+        e.target.closest('.hole-section-chip').classList.add('dragging');
+    }
+
+    function endDrag(e) {
+        document.querySelectorAll('.hole-section-chip').forEach(chip => {
+            chip.classList.remove('dragging', 'drag-over');
+        });
+        state.draggedIndex = null;
+    }
+
+    function dragOver(e) {
+        e.preventDefault();
+        if (state.draggedIndex !== null) {
+            e.target.closest('.hole-section-chip')?.classList.add('drag-over');
+        }
+    }
+
+    function dragLeave(e) {
+        e.target.closest('.hole-section-chip')?.classList.remove('drag-over');
+    }
+
+    function drop(e) {
+        e.preventDefault();
+        const dropIndex = parseInt(e.target.closest('.hole-section-chip').dataset.index);
+        
+        if (state.draggedIndex !== null && state.draggedIndex !== dropIndex) {
+            const draggedHole = state.holes[state.draggedIndex];
+            state.holes.splice(state.draggedIndex, 1);
+            state.holes.splice(dropIndex, 0, draggedHole);
+            
+            renderHolesList();
+            updateQuestionsTabs();
+        }
+    }
+
+    function deleteHole(e, index) {
+        e.stopPropagation();
+        state.holes.splice(index, 1);
+        const holeId = index;
+        if (state.toolAnswers[holeId]) {
+            delete state.toolAnswers[holeId];
+        }
+        renderHolesList();
+    }
+
+    function addHole() {
+        const size = document.getElementById('holeSize').value.trim();
+        const casing = document.getElementById('casingInfo').value.trim();
+        const notes = document.getElementById('holeNotes').value.trim();
+
+        if (!size) {
+            alert('Please enter a hole size');
+            return;
+        }
+
+        state.holes.push({ size, casing, notes });
+        
+        // Clear inputs
+        document.getElementById('holeSize').value = '';
+        document.getElementById('casingInfo').value = '';
+        document.getElementById('holeNotes').value = '';
+
+        renderHolesList();
+    }
+
+    function updatePlanTable() {
+        const tbody = document.getElementById('planTableBody');
+        tbody.innerHTML = '';
+
+        state.holes.forEach((hole, holeIndex) => {
+            const row = document.createElement('tr');
+            
+            let rowHtml = `<td class="hole-section-cell">${hole.size}${hole.casing ? '<br><small>' + hole.casing + '</small>' : ''}</td>`;
+
+            toolsList.forEach(tool => {
+                const answers = state.toolAnswers[holeIndex]?.[tool] || [];
+                const priority = determinePriority(answers);
+                const override = state.cellOverrides[`${holeIndex}-${tool}`];
+                const isConditional = state.cellConditional[`${holeIndex}-${tool}`];
+                
+                let cellContent = override !== undefined ? override : '—';
+                let cellClass = 'tool-cell cell-empty';
+
+                if (override !== undefined && override.trim() === '') {
+                    cellContent = '—';
+                } else if (override !== undefined) {
+                    // User has entered custom content
+                    cellClass = 'tool-cell cell-p1';
+                    if (isConditional) cellContent += ' *';
+                } else if (priority === 1) {
+                    cellContent = isConditional ? '*' : '✓';
+                    cellClass = 'tool-cell cell-p1';
+                } else if (priority === 2) {
+                    cellContent = isConditional ? '*' : '✓';
+                    cellClass = 'tool-cell cell-p2';
+                } else {
+                    cellContent = '—';
+                    cellClass = 'tool-cell cell-empty';
+                }
+
+                rowHtml += `
+                    <td class="${cellClass}" onclick="editCell(${holeIndex}, '${tool}')">
+                        <div class="cell-content">
+                            <span class="cell-text">${cellContent}</span>
+                            <span class="cell-edit-icon">✎</span>
+                        </div>
+                    </td>
+                `;
+            });
+
+            row.innerHTML = rowHtml;
+            tbody.appendChild(row);
+        });
+    }
+
+    function editCell(holeIndex, tool) {
+        currentCellEdit = { holeIndex, tool };
+        const override = state.cellOverrides[`${holeIndex}-${tool}`];
+        document.getElementById('cellModalInput').value = override !== undefined ? override : '';
+        document.getElementById('cellModal').style.display = 'block';
+        document.getElementById('cellModalInput').focus();
+    }
+
+    function saveCellContent() {
+        if (!currentCellEdit) return;
+        const { holeIndex, tool } = currentCellEdit;
+        const content = document.getElementById('cellModalInput').value.trim();
+        
+        if (content === '') {
+            delete state.cellOverrides[`${holeIndex}-${tool}`];
+        } else {
+            state.cellOverrides[`${holeIndex}-${tool}`] = content;
+        }
+        
+        closeCellModal();
+        updatePlanTable();
+    }
+
+    function closeCellModal() {
+        document.getElementById('cellModal').style.display = 'none';
+        currentCellEdit = null;
+    }
+
+    function updateQuestionsTabs() {
+        const tabsContainer = document.getElementById('holeTabs');
+        const contentContainer = document.getElementById('questionsContent');
+        const section = document.getElementById('questionsSection');
+
+        if (state.holes.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        tabsContainer.innerHTML = '';
+        contentContainer.innerHTML = '';
+
+        state.holes.forEach((hole, index) => {
+            const tab = document.createElement('button');
+            tab.className = `tab ${index === 0 ? 'active' : ''}`;
+            tab.textContent = hole.size;
+            tab.onclick = () => selectHoleTab(index);
+            tabsContainer.appendChild(tab);
+        });
+
+        renderHoleQuestions(0);
+    }
+
+    function selectHoleTab(holeIndex) {
+        document.querySelectorAll('.tab').forEach((tab, index) => {
+            tab.classList.toggle('active', index === holeIndex);
+        });
+        renderHoleQuestions(holeIndex);
+    }
+
+    function renderHoleQuestions(holeIndex) {
+        const contentContainer = document.getElementById('questionsContent');
+        contentContainer.innerHTML = '';
+
+        // Initialize tool answers for this hole if not exists
+        if (!state.toolAnswers[holeIndex]) {
+            state.toolAnswers[holeIndex] = {};
+        }
+
+        toolsList.forEach(tool => {
+            if (!state.toolAnswers[holeIndex][tool]) {
+                state.toolAnswers[holeIndex][tool] = new Array(toolQuestions[tool].length).fill(null);
+            }
+
+            const toolSection = document.createElement('div');
+            toolSection.className = 'tool-section';
+
+            const answers = state.toolAnswers[holeIndex][tool];
+            const priority = determinePriority(answers);
+
+            let priorityBadge = '<span class="tool-priority priority-none">Not Required</span>';
+            if (priority === 1) {
+                priorityBadge = '<span class="tool-priority priority-p1">Priority 1</span>';
+            } else if (priority === 2) {
+                priorityBadge = '<span class="tool-priority priority-p2">Priority 2</span>';
+            }
+
+            let headerHtml = `
+                <div class="tool-header">
+                    <span class="tool-name">${tool}</span>
+                    ${priorityBadge}
+                </div>
+            `;
+
+            let questionsHtml = '<div class="questions-list">';
+
+            toolQuestions[tool].forEach((question, qIndex) => {
+                const currentAnswer = answers[qIndex];
+                questionsHtml += `
+                    <div class="question">
+                        <div class="question-text">${question}</div>
+                        <div class="question-options">
+                            <button class="option-btn ${currentAnswer === 'yes' ? 'selected' : ''}" 
+                                onclick="setAnswer(${holeIndex}, '${tool}', ${qIndex}, 'yes')">
+                                Yes
+                            </button>
+                            <button class="option-btn ${currentAnswer === 'no' ? 'selected' : ''}" 
+                                onclick="setAnswer(${holeIndex}, '${tool}', ${qIndex}, 'no')">
+                                No
+                            </button>
+                            <button class="option-btn ${currentAnswer === 'maybe' ? 'selected' : ''}" 
+                                onclick="setAnswer(${holeIndex}, '${tool}', ${qIndex}, 'maybe')">
+                                Maybe
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Add conditional activation checkbox for ALD Image
+            if (tool === 'ALD Image') {
+                const cellKey = `${holeIndex}-${tool}`;
+                const isConditional = state.cellConditional[cellKey] || false;
+                questionsHtml += `
+                    <div class="question" style="border: 1px dashed var(--border-color); margin-top: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="checkbox" id="conditional-${holeIndex}-${tool}" ${isConditional ? 'checked' : ''} 
+                                onchange="toggleConditional(${holeIndex}, '${tool}')">
+                            <label for="conditional-${holeIndex}-${tool}" style="margin: 0; cursor: pointer; font-size: 12px; color: var(--text-secondary);">
+                                Mark as conditional activation (*)
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }
+
+            questionsHtml += '</div>';
+
+            toolSection.innerHTML = headerHtml + questionsHtml;
+            contentContainer.appendChild(toolSection);
+        });
+    }
+
+    function setAnswer(holeIndex, tool, questionIndex, answer) {
+        state.toolAnswers[holeIndex][tool][questionIndex] = answer;
+        renderHoleQuestions(holeIndex);
+        updatePlanTable();
+    }
+
+    function toggleConditional(holeIndex, tool) {
+        const cellKey = `${holeIndex}-${tool}`;
+        state.cellConditional[cellKey] = !state.cellConditional[cellKey];
+        updatePlanTable();
+    }
+
+    // ==================== THEME TOGGLE ====================
+    function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.classList.contains('dark-mode');
+        
+        if (isDark) {
+            html.classList.remove('dark-mode');
+            html.classList.add('light-mode');
+            localStorage.setItem('theme', 'light');
+            document.getElementById('themeToggle').textContent = '🌙 Dark Mode';
+        } else {
+            html.classList.remove('light-mode');
+            html.classList.add('dark-mode');
+            localStorage.setItem('theme', 'dark');
+            document.getElementById('themeToggle').textContent = '☀️ Light Mode';
+        }
+    }
+
+    // ==================== SCROLL NAVIGATION ====================
+    function scrollToSection(sectionId) {
+        const element = document.getElementById(sectionId);
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        // Update TOC active state
+        document.querySelectorAll('.toc-link').forEach(link => {
+            link.classList.remove('active');
+        });
+        event.target.classList.add('active');
+    }
+
+    // ==================== MODAL HANDLERS ====================
+    window.onclick = function(event) {
+        const modal = document.getElementById('cellModal');
+        if (event.target == modal) {
+            closeCellModal();
+        }
+    }
+
+    document.getElementById('cellModalInput')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') saveCellContent();
+    });
+
+    // ==================== INITIALIZATION ====================
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set dark mode as default (already in HTML)
+        document.getElementById('themeToggle').textContent = '☀️ Light Mode';
+
+        // Theme toggle
+        document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+        // Add hole button
+        document.getElementById('addHoleBtn').addEventListener('click', addHole);
+
+        // Enter key on hole size input
+        document.getElementById('holeSize').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addHole();
+        });
+
+        // Initial render
+        renderHolesList();
+    });
+</script>
+
+</body>
+</html>
